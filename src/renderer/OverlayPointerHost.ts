@@ -18,6 +18,7 @@ export interface InteractiveCompanion {
 
 export interface OverlayHostApi {
   setInteractive(interactive: boolean): void;
+  setGrabbed(grabbed: boolean): void;
   openMenu(): void;
 }
 
@@ -51,6 +52,21 @@ export class OverlayPointerHost {
     return null;
   }
 
+  private topmostNear(x: number, y: number): InteractiveCompanion | null {
+    const direct = this.topmostAt(x, y);
+    if (direct) return direct;
+    // Expand hover activation slightly so the first click near a sprite's edge
+    // reaches the overlay. Pointer-down continues to use exact hit-testing.
+    for (const radius of [3, 6]) {
+      for (let i = 0; i < 16; i++) {
+        const angle = (Math.PI * 2 * i) / 16;
+        const near = this.topmostAt(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
+        if (near) return near;
+      }
+    }
+    return null;
+  }
+
   private setInteractive(on: boolean): void {
     if (on === this.interactive) return;
     this.interactive = on;
@@ -60,7 +76,7 @@ export class OverlayPointerHost {
   /** Re-evaluate hover with the last known cursor position (call once per frame). */
   public recheck(): void {
     if (this.active || !this.cursor) return;
-    const over = this.topmostAt(this.cursor.x, this.cursor.y) !== null;
+    const over = this.topmostNear(this.cursor.x, this.cursor.y) !== null;
     this.setInteractive(over);
     this.canvas.style.cursor = over ? 'grab' : '';
   }
@@ -88,6 +104,7 @@ export class OverlayPointerHost {
     const hero = this.topmostAt(e.clientX, e.clientY);
     if (!hero || !hero.pointerDown(e.clientX, e.clientY)) return;
     this.active = hero;
+    this.api.setGrabbed(true);
     this.onGrab(hero);
     e.preventDefault();
     this.setInteractive(true);
@@ -109,17 +126,16 @@ export class OverlayPointerHost {
     this.finish(e);
   };
 
+  private readonly onContext = (e: MouseEvent): void => {
+    if (this.active || !this.topmostAt(e.clientX, e.clientY)) return;
+    e.preventDefault();
+    this.api.openMenu();
+  };
+
   private readonly onBlur = (): void => {
     if (!this.active) return;
     this.active.cancelInteraction();
     this.finish();
-  };
-
-  private readonly onContext = (e: MouseEvent): void => {
-    if (this.topmostAt(e.clientX, e.clientY)) {
-      e.preventDefault();
-      this.api.openMenu();
-    }
   };
 
   private finish(e?: PointerEvent): void {
@@ -130,6 +146,7 @@ export class OverlayPointerHost {
     this.canvas.style.cursor = '';
     this.recheck();
     this.onChange();
+    this.api.setGrabbed(false);
   }
 
   /** Drop any held companion and go click-through (used when pausing). */

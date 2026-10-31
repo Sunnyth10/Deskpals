@@ -39,10 +39,13 @@ export class Stage {
   public resize(width: number, height: number): void {
     this.bounds.width = Math.max(1, width);
     this.bounds.height = Math.max(1, height);
+    for (const entry of this.entries) {
+      entry.c.x = clampCompanionX(entry.name, entry.c.x, this.bounds);
+    }
   }
 
-  private make(name: CompanionName): Companion {
-    const x = clampCompanionX(name, this.bounds.width * (0.2 + Math.random() * 0.6), this.bounds);
+  private make(name: CompanionName, startX?: number): Companion {
+    const x = clampCompanionX(name, startX ?? this.bounds.width * (0.2 + Math.random() * 0.6), this.bounds);
     const floor = this.bounds.y + this.bounds.height - 4;
     const id = `companion-${name}`;
     switch (name) {
@@ -56,6 +59,7 @@ export class Stage {
 
   /** Make the set of companions on stage match `names` (adds/removes, keeps the rest). */
   public setCompanions(names: readonly string[]): void {
+    const previousX = this.entries[0]?.c.x;
     const wanted = new Set(names.filter((n): n is CompanionName =>
       ['cat', 'fox', 'ghost', 'robot', 'webhero'].includes(n)));
     for (const e of this.entries) {
@@ -64,7 +68,7 @@ export class Stage {
     this.entries = this.entries.filter((e) => wanted.has(e.name));
     for (const name of wanted) {
       if (this.entries.some((e) => e.name === name)) continue;
-      const c = this.make(name);
+      const c = this.make(name, previousX);
       c.setInteractive(true);
       c.setReducedMotion(null); // follow the OS "reduce motion" setting
       this.entries.push({ name, c });

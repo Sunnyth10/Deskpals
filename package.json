@@ -7,13 +7,40 @@
     "build": "node build.mjs",
     "start": "npm run build && node scripts/run-electron.cjs .",
     "debug": "npm run build && node scripts/run-electron.cjs . --debug",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
     "typecheck": "tsc --noEmit",
     "test": "node build.mjs --smoke && node dist-test/smoke.js"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "electron": "^33.2.0",
+    "electron-builder": "^26.18.0",
     "esbuild": "^0.24.0",
     "typescript": "^5.6.0"
+  },
+  "build": {
+    "appId": "com.sunnyth.companiondesk",
+    "productName": "Companion Desk",
+    "directories": { "output": "release" },
+    "files": [
+      "dist/**/*",
+      "assets/tray.png",
+      "scripts/windows-fullscreen-monitor.ps1",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": ["scripts/windows-fullscreen-monitor.ps1"],
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }]
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

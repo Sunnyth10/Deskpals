@@ -1,48 +1,56 @@
-# companion-desk
+# Companion Desk
 
-Your five companions (cat, fox, ghost, robot, web hero) running on the desktop in a
-transparent, click-through Electron overlay. macOS and Windows.
+Five desktop companions (cat, fox, ghost, robot, web hero) in a transparent Electron overlay for macOS and Windows. The tray menu selects exactly one companion at a time.
 
 ## Run
-    npm install
-    npm start            # builds, then launches
-    npm run debug        # same, and prints CPU + fps + companion states every 5 s
-    npm run typecheck    # tsc, strict
-    npm test             # headless smoke test (idle, grab, throw, land, events, all five)
 
-Control everything from the menu-bar / tray icon (or right-click a companion):
-pick which companions are out (several at once), trigger reactions (save / run /
-build success / build error), choose the display, pause, launch at login, quit.
+```sh
+npm install
+npm start
+```
 
-## What was reused vs. new
-Unchanged (only two import paths edited): `src/renderer/companions/*` (all five companions,
-their Grab layers, `CompanionGrab`, `CompanionPhysics`, `CompanionBounds`) and
-`src/engine/particles/ParticleEngine.ts`. `src/core/types.ts` is trimmed to the 5 types they use.
+`npm start` builds the TypeScript with esbuild before launching Electron. The launcher removes an inherited `ELECTRON_RUN_AS_NODE` setting that would otherwise start Electron as plain Node.
 
-New:
-- `src/renderer/Stage.ts`: hosts the companions exactly like the extension's CanvasRenderer
-  (full-canvas physics world, floor 4 px above the bottom, X clamp unless held/airborne),
-  plus the frame-rate tiers. No Electron/DOM dependency.
-- `src/renderer/OverlayPointerHost.ts`: replaces CompanionPointerHost. Toggles window
-  click-through over the companion's pixels instead of toggling CSS pointer-events.
-- `src/main/main.ts`: overlay window, tray menu, settings (saved in userData/settings.json).
+## Test and build
 
-## Architecture
-One transparent overlay window per run, covering the work area of one display (screen minus
-Dock/taskbar/menu bar), so the Dock/taskbar is the floor. The window is
-`focusable: false` (+ `type: 'panel'` on macOS) so clicking/throwing a companion never steals
-keyboard focus from the app you are typing in. It is click-through except over a companion.
+```sh
+npm run typecheck
+npm test
+npm run build
+npm run debug
+```
 
-## Power
-- Frame tiers in `Stage.ts`: 60 fps while held/thrown, 30 fps awake and calm, 12 fps when all
-  are asleep. Tune `FPS_ACTIVE / FPS_CALM / FPS_SLEEP`.
-- The loop stops completely when no companion is selected, when paused, or when the window is
-  hidden (macOS hides it in other apps' fullscreen Spaces).
-- Canvas DPR is capped at 2.
-- Measure with `npm run debug`.
+The smoke test covers the five companions, grab/throw/landing, one-at-a-time switching and disposal, settings parsing and legacy migration, and display resizing/floor updates. Debug mode prints aggregate CPU use and renderer FPS/state every five seconds.
 
-## Known limits / next steps
-- Companions live on one display at a time (menu: Display). Crossing displays is not done.
-- No detection of fullscreen apps on Windows yet (macOS hides the overlay in fullscreen Spaces).
-- Click-through toggling can miss the very first pixel of a hover at a companion's edge.
-- The VS Code `editorCompanion` code was not included (only its compiled `out/` was in the zip).
+Create installers with `npm run dist:mac` or `npm run dist:win`. The macOS target creates DMGs for arm64 and x64; Windows creates an x64 NSIS installer. Build on the target operating system for the most reliable result. Cross-building Windows installers on macOS requires Wine. The Windows fullscreen monitor script and `assets/tray.png` are included in the package.
+
+## Tray menu
+
+Choose one companion from the radio list, trigger a reaction, choose a display, pause/resume, toggle launch at login, open the main log, or quit. The tray icon and menu remain available if the overlay has a renderer error or the companion is temporarily hidden.
+
+## Settings and logs
+
+Settings are stored in Electron’s `userData/settings.json` directory. Old `companions` arrays migrate using their first entry. Missing, empty, invalid, or corrupt settings fall back to the cat. Updates use a temporary file and rename so a partial write cannot replace the last complete settings file.
+
+Errors are written to `userData/logs/main.log`, with one rotated backup at `main.log.1` (each file is capped at about 1 MB). Use **Show log** in the tray menu to open it.
+
+## Focus and input
+
+The overlay uses `focusable: false`, `showInactive()`, and macOS panel window type. It never calls `win.focus()` or `app.focus()`. The native `@akiflow/electron-panel-window` helper was tested against Electron 33: its native module rebuilt, but the app crashed at runtime with `-[PROPanel setDisableKeyOrMainWindow:]: unrecognized selector`, so it is not included.
+
+As a macOS fallback, the app records the frontmost app before making the companion interactive and reopens that app after a grab ends. Right-click popup menus on companions are disabled; use the tray menu. Please manually verify that a WhatsApp or other text caret keeps blinking while you grab, throw, and release a companion.
+
+## Troubleshooting
+
+- **Blank overlay:** The app falls back to the cat for invalid settings. Choose a companion in the tray menu; if needed, quit and remove `settings.json` from `userData` to reset the selection.
+- **Focus changes after a throw:** Check `userData/logs/main.log`. The macOS fallback depends on reading the frontmost app and reopening it after release; this behavior still needs manual verification on macOS. On Windows, `focusable: false` and click-through toggling are configured, but need manual verification there.
+- **Window missing after display or sleep changes:** The overlay retargets the saved display, falls back to primary if it was unplugged, and resets to click-through while repositioning. Power suspend and lock/unlock events stop and resume rendering.
+- Electron 33 exposes system suspend and lock events, but no display-only sleep event. If a monitor powers off while the computer stays awake, separate render-loop suspension is not currently detected.
+- **macOS blocks an unsigned build:** Allow the app in Privacy & Security if Gatekeeper blocks the local build. This project does not configure signing or notarization.
+- **Windows fullscreen:** A foreground window covering a monitor hides the overlay until fullscreen ends. If PowerShell is restricted, inspect the main log.
+
+## Packaging and signing
+
+Code signing is not configured. macOS distribution needs an Apple Developer ID Application certificate and notarization credentials. Windows distribution needs an Authenticode code-signing certificate. Configure those only when you are ready to distribute signed installers.
+
+There is no size menu option: companion scale is currently owned by each companion implementation, and changing it consistently would require editing the protected companion files.

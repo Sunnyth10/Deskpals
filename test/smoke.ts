@@ -4,6 +4,7 @@
  * goes NaN, and a thrown companion always comes back to rest inside the stage.
  */
 import { Stage, CompanionName, Companion } from '../src/renderer/Stage';
+import { parseSettings, selectSingleCompanion } from '../src/core/settings';
 
 let clock = 0;
 Object.defineProperty(globalThis, 'performance', { value: { now: () => clock }, configurable: true, writable: true });
@@ -25,6 +26,18 @@ const W = 1440, H = 800, DT = 1 / 60;
 const NAMES: CompanionName[] = ['cat', 'fox', 'ghost', 'robot', 'webhero'];
 let failures = 0;
 const check = (ok: boolean, msg: string): void => { if (!ok) { failures++; console.error('  FAIL', msg); } };
+
+console.log('# settings parsing and legacy migration');
+check(parseSettings('{}').companion === 'cat', 'missing companion defaults to cat');
+check(parseSettings('{"companions":[]}').companion === 'cat', 'empty legacy selection defaults to cat');
+check(parseSettings('{"companions":["fox","cat"]}').companion === 'fox', 'migrates first legacy selection');
+check(parseSettings('{"companions":["unknown","fox"]}').companion === 'cat', 'invalid first legacy selection defaults to cat');
+check(parseSettings('{"companion":"invalid"}').companion === 'cat', 'invalid selection defaults to cat');
+check(selectSingleCompanion(['fox', 'cat']) === 'fox', 'renderer accepts only the first selected companion');
+check(selectSingleCompanion([]) === 'cat', 'renderer falls back to cat when selection is empty');
+let corruptSettingsRejected = false;
+try { parseSettings('{"companion":'); } catch { corruptSettingsRejected = true; }
+check(corruptSettingsRejected, 'corrupt settings rejected for safe default handling');
 
 function step(stage: Stage, frames: number, dt = DT): void {
   for (let i = 0; i < frames; i++) {
@@ -109,6 +122,45 @@ console.log('# all five together');
   stage.setCompanions(['fox']);
   step(stage, 120);
   check(stage.list().every(finite), 'resize + re-add ok');
+}
+
+console.log('# switch one companion at a time');
+{
+  const stage = new Stage();
+  stage.resize(W, H);
+  stage.setCompanions([]);
+  for (const name of NAMES) {
+    const previous = stage.list()[0];
+    const previousX = previous?.x;
+    let disposed = false;
+    if (previous) {
+      const dispose = previous.dispose.bind(previous);
+      previous.dispose = () => { disposed = true; dispose(); };
+    }
+    stage.setCompanions([name]);
+    check(stage.list().length === 1, `${name}: exactly one companion on stage`);
+    check(!previous || !stage.list().includes(previous), `${name}: previous companion removed`);
+    if (previous) check(disposed, `${name}: previous companion disposed`);
+    const current = stage.list()[0];
+    if (previousX !== undefined) check(Math.abs(current.x - previousX) < 1, `${name}: keeps previous x position`);
+    check(Math.abs(current.y - (H - 4)) < 1, `${name}: starts on floor`);
+  }
+  stage.dispose();
+}
+
+console.log('# display resize and floor update');
+for (const name of NAMES) {
+  const stage = new Stage();
+  stage.resize(W, H);
+  stage.setCompanions([name]);
+  const c = stage.list()[0];
+  const beforeY = c.y;
+  stage.resize(W - 200, H - 140);
+  step(stage, 1);
+  check(c.x >= 0 && c.x <= W - 200, `${name}: stays within resized display width`);
+  check(c.y >= 0 && c.y <= H - 140, `${name}: stays within resized display height`);
+  check(Math.abs(c.y - beforeY) >= 1, `${name}: updates position when the floor moves`);
+  stage.dispose();
 }
 
 if (failures) { console.error(`\n${failures} check(s) failed`); process.exit(1); }

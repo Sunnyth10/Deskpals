@@ -5,6 +5,7 @@
  */
 import type { OverlayApi } from '../preload/preload';
 import { LivingEventType } from '../core/types';
+import { selectSingleCompanion } from '../core/settings';
 import { FPS_SLEEP, Stage } from './Stage';
 import { OverlayPointerHost } from './OverlayPointerHost';
 
@@ -13,9 +14,10 @@ declare global {
 }
 
 const api = window.overlay;
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
 const canvas = document.getElementById('stage') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
-const stage = new Stage();
+let stage = new Stage();
 
 let dpr = 1;
 let paused = false;
@@ -25,6 +27,8 @@ let timer: number | undefined;
 let raf = 0;
 let framesSince = 0;
 let telemetryAt = performance.now();
+let consecutiveFrameErrors = 0;
+let companionNames: string[] = [];
 
 function resize(): void {
   const w = window.innerWidth;
@@ -41,15 +45,23 @@ function clear(): void {
   ctx.clearRect(0, 0, stage.bounds.width, stage.bounds.height);
 }
 
-function stop(): void {
+function debugLog(event: string, details: Record<string, unknown> = {}): void {
+  if (!DEBUG) return;
+  const message = `[${new Date().toISOString()}] [renderer] ${event} ${JSON.stringify(details)}`;
+  console.info(message);
+  api.debugLog(message);
+}
+
+function stop(clearCanvas = true): void {
+  debugLog('stop()', { running, paused, hidden: document.hidden, clearCanvas, companions: stage.list().length });
   running = false;
   if (timer !== undefined) { clearTimeout(timer); timer = undefined; }
   cancelAnimationFrame(raf);
-  clear();
+  if (clearCanvas) clear();
 }
 
 function wake(): void {
-  console.info('[renderer] wake', JSON.stringify({ running, paused, hidden: document.hidden, companions: stage.list().length }));
+  debugLog('wake()', { running, paused, hidden: document.hidden, companions: stage.list().length });
   if (running || paused || document.hidden) return;
   running = true;
   last = performance.now();
@@ -57,6 +69,7 @@ function wake(): void {
 }
 
 function loop(): void {
+  try {
   const now = performance.now();
   const fps = stage.targetFps();
   const interval = 1000 / fps;
@@ -71,9 +84,10 @@ function loop(): void {
   host.recheck();
   clear();
   stage.render(ctx);
+  consecutiveFrameErrors = 0;
   framesSince++;
 
-  if (!stage.needsFrames() || paused || document.hidden) { stop(); return; }
+  if (!stage.needsFrames() || paused || document.hidden) { stop(!document.hidden); return; }
 
   const delay = interval - (performance.now() - now);
   if (delay > 8) {
@@ -81,19 +95,42 @@ function loop(): void {
   } else {
     raf = requestAnimationFrame(loop);
   }
+  } catch (error) {
+    consecutiveFrameErrors++;
+    const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    console.error('[renderer] frame error', consecutiveFrameErrors, message);
+    api.frameError(`${consecutiveFrameErrors}/5 consecutive frame errors: ${message}`);
+    if (consecutiveFrameErrors >= 5) {
+      host.release();
+      stage.dispose();
+      stage = new Stage();
+      stage.resize(window.innerWidth, window.innerHeight);
+      stage.setCompanions(companionNames);
+      consecutiveFrameErrors = 0;
+      stop();
+      wake();
+    } else {
+      raf = requestAnimationFrame(loop);
+    }
+  }
 }
 
 const host = new OverlayPointerHost(
   canvas,
   () => stage.list(),
-  { setInteractive: (v) => api.setInteractive(v), openMenu: () => api.openMenu() },
+  {
+    setInteractive: (v) => api.setInteractive(v),
+    setGrabbed: (v) => api.setGrabbed(v),
+    openMenu: () => api.openMenu(),
+  },
   (c) => stage.bringToFront(c),
   wake,
 );
 
 api.onCompanions((names) => {
-  console.info('[renderer] companions:set', JSON.stringify(names));
-  stage.setCompanions(names);
+  debugLog('companions:set', { names });
+  companionNames = [selectSingleCompanion(names)];
+  stage.setCompanions(companionNames);
   wake();
 });
 api.onEvent((name) => { stage.trigger(name as LivingEventType); wake(); });
@@ -110,7 +147,15 @@ api.onTelemetryRequest(() => {
 });
 
 window.addEventListener('resize', resize);
-document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else wake(); });
+document.addEventListener('visibilitychange', () => {
+  debugLog('visibilitychange', { hidden: document.hidden });
+  if (document.hidden) stop(false); else wake();
+});
+api.onDisplayChange(() => {
+  host.release();
+  resize();
+  api.setInteractive(false);
+});
 
 resize();
 api.ready();

@@ -1,0 +1,19 @@
+{
+  "name": "companion-desk",
+  "version": "0.1.0",
+  "description": "Desktop companions (cat, fox, ghost, robot, web hero) in a click-through Electron overlay",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "npm run build && node scripts/run-electron.cjs .",
+    "debug": "npm run build && node scripts/run-electron.cjs . --debug",
+    "typecheck": "tsc --noEmit",
+    "test": "node build.mjs --smoke && node dist-test/smoke.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "electron": "^33.2.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}

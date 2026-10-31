@@ -103,7 +103,6 @@ function createOverlay(): void {
     fullscreenable: false,
     show: false,
     backgroundColor: '#00000000',
-    acceptFirstMouse: true,
     // Never take keyboard focus from the app you are typing in. On macOS BOTH are needed:
     // a non-activating panel AND focusable:false (Chromium also tries to focus on click).
     focusable: false,

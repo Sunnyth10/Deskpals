@@ -74,13 +74,13 @@ You can click them, drag them, pet them, ignore them, or let them wander. They r
 
 ## ⬇️ Download DeskPals
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/latest/download/DeskPals-mac-universal.dmg">
-  <img src="https://img.shields.io/badge/⬇%EF%B8%8F%20Download%20for%20macOS-black?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS" height="50">
-</a>
+<h3>
+  <a href="https://github.com/Sunnyth10/Deskpals/releases/latest/download/DeskPals-mac-universal.dmg">🍎 Download for macOS (.dmg)</a>
+</h3>
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/latest/download/DeskPals-win-x64.exe">
-  <img src="https://img.shields.io/badge/⬇%EF%B8%8F%20Download%20for%20Windows-0078d4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows" height="50">
-</a>
+<h3>
+  <a href="https://github.com/Sunnyth10/Deskpals/releases/latest/download/DeskPals-win-x64.exe">🪟 Download for Windows (.exe)</a>
+</h3>
 
 </div>
 

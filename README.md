@@ -33,24 +33,25 @@
 3. [Features](#-features)
 4. [Availability: macOS and Windows](#-availability-macos-and-windows)
 5. [System requirements](#-system-requirements)
-6. [Installation](#-installation)
-7. [Quick start](#-quick-start)
-8. [Controls and interactions](#-controls-and-interactions)
-9. [Behavior engine](#-behavior-engine-how-they-think)
-10. [Tech stack](#-tech-stack)
-11. [Architecture](#-architecture)
-12. [Project structure](#-project-structure)
-13. [Development setup](#-development-setup)
-14. [Building and packaging](#-building-and-packaging)
-15. [Configuration reference](#-configuration-reference)
-16. [Permissions and privacy](#-permissions-and-privacy)
-17. [Performance budget](#-performance-budget)
-18. [Adding a new companion](#-adding-a-new-companion)
-19. [Troubleshooting](#-troubleshooting)
-20. [FAQ](#-faq)
-21. [Roadmap](#-roadmap)
-22. [Contributing](#-contributing)
-23. [License and credits](#-license-and-credits)
+6. [⬇️ Download](#️-download)
+7. [Installation](#-installation)
+8. [Quick start](#-quick-start)
+9. [Controls and interactions](#-controls-and-interactions)
+10. [Behavior engine](#-behavior-engine-how-they-think)
+11. [Tech stack](#-tech-stack)
+12. [Architecture](#-architecture)
+13. [Project structure](#-project-structure)
+14. [Development setup](#-development-setup)
+15. [Building and packaging](#-building-and-packaging)
+16. [Configuration reference](#-configuration-reference)
+17. [Permissions and privacy](#-permissions-and-privacy)
+18. [Performance budget](#-performance-budget)
+19. [Adding a new companion](#-adding-a-new-companion)
+20. [Troubleshooting](#-troubleshooting)
+21. [FAQ](#-faq)
+22. [Roadmap](#-roadmap)
+23. [Contributing](#-contributing)
+24. [License and credits](#-license-and-credits)
 
 ---
 
@@ -222,19 +223,52 @@ There are **5 companions** in the current release.
 
 ---
 
+## ⬇️ Download
+
+<div align="center">
+
+[![GitHub release](https://img.shields.io/github/v/release/Sunnyth10/Deskpals?label=latest&style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
+[![GitHub downloads](https://img.shields.io/github/downloads/Sunnyth10/Deskpals/total?style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
+
+<a href="https://github.com/Sunnyth10/Deskpals/releases/latest/download/DeskPals-mac-universal.dmg">
+  <img alt="Download for macOS" src="https://img.shields.io/badge/Download-macOS%20Universal-black?style=for-the-badge&logo=apple">
+</a>
+&nbsp;
+<a href="https://github.com/Sunnyth10/Deskpals/releases/latest/download/DeskPals-win-x64.exe">
+  <img alt="Download for Windows" src="https://img.shields.io/badge/Download-Windows%20x64-0078d4?style=for-the-badge&logo=windows">
+</a>
+
+Browse all releases → [github.com/Sunnyth10/Deskpals/releases](https://github.com/Sunnyth10/Deskpals/releases)
+
+</div>
+
+### First launch: what to expect
+
+**🍎 macOS**
+
+Open the `.dmg`, drag **DeskPals** into **Applications**, then launch it.
+
+If macOS says the app is damaged or from an unidentified developer, run this once in Terminal:
+
+```bash
+xattr -cr /Applications/DeskPals.app
+```
+
+Or go to **System Settings → Privacy & Security → Open Anyway**.
+
+**🪟 Windows**
+
+Run `DeskPals-win-x64.exe` and follow the prompts. DeskPals will appear in your system tray.
+
+Windows SmartScreen may show a warning on unsigned builds. Click **More info → Run anyway**.
+
+---
+
 ## 📦 Installation
 
 ### Option A: Download a release (easiest)
 
-1. Go to the **[Releases](https://github.com/Sunnyth10/Deskpals/releases)** page.
-2. Download the file for your system:
-   - 🍎 macOS: `DeskPals-<version>-universal.dmg`
-   - 🪟 Windows: `DeskPals-Setup-<version>.exe`
-3. Install and launch.
-
-**macOS:** open the `.dmg`, drag **DeskPals** into **Applications**, then launch it. If macOS blocks it, go to **System Settings → Privacy & Security → Open Anyway**.
-
-**Windows:** run the installer and follow the prompts. DeskPals will appear in your system tray.
+See [⬇️ Download](#️-download) above for the direct download buttons.
 
 ### Option B: Build from source
 

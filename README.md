@@ -226,7 +226,7 @@ There are **5 companions** in the current release.
 
 ### Option A: Download a release (easiest)
 
-1. Go to the **[Releases](https://github.com/Sunnyth10/companion-desk/releases)** page.
+1. Go to the **[Releases](https://github.com/Sunnyth10/Deskpals/releases)** page.
 2. Download the file for your system:
    - 🍎 macOS: `DeskPals-<version>-universal.dmg`
    - 🪟 Windows: `DeskPals-Setup-<version>.exe`
@@ -239,7 +239,7 @@ There are **5 companions** in the current release.
 ### Option B: Build from source
 
 ```bash
-git clone https://github.com/Sunnyth10/companion-desk.git
+git clone https://github.com/Sunnyth10/Deskpals.git
 cd deskpals
 npm install
 npm run dev
@@ -554,7 +554,7 @@ deskpals/
 
 ```bash
 # 1. Clone
-git clone https://github.com/Sunnyth10/companion-desk.git
+git clone https://github.com/Sunnyth10/Deskpals.git
 cd deskpals
 
 # 2. Install dependencies

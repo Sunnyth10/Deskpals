@@ -43,5 +43,5 @@ nsis:
 publish:
   provider: github
   owner: Sunnyth10
-  repo: companion-desk
+  repo: Deskpals
 

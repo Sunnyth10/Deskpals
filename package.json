@@ -1,6 +1,6 @@
 {
   "name": "companion-desk",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Desktop companions (cat, fox, ghost, robot, web hero) in a click-through Electron overlay",
   "main": "dist/main.js",
   "scripts": {
@@ -19,33 +19,5 @@
     "electron-builder": "^26.18.0",
     "esbuild": "^0.24.0",
     "typescript": "^5.6.0"
-  },
-  "build": {
-    "appId": "com.sunnyth.companiondesk",
-    "productName": "Companion Desk",
-    "directories": { "output": "release" },
-    "files": [
-      "dist/**/*",
-      "assets/logo.png",
-      "assets/tray.png",
-      "assets/logo.icns",
-      "assets/logo.ico",
-      "scripts/windows-fullscreen-monitor.ps1",
-      "package.json"
-    ],
-    "asar": true,
-    "asarUnpack": ["scripts/windows-fullscreen-monitor.ps1"],
-    "mac": {
-      "icon": "assets/logo.icns",
-      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }]
-    },
-    "win": {
-      "icon": "assets/logo.ico",
-      "target": [{ "target": "nsis", "arch": ["x64"] }]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
   }
 }

@@ -1,0 +1,47 @@
+appId: com.sunnyth.companiondesk
+productName: DeskPals
+
+directories:
+  output: release
+
+# Files packed into the asar / installer
+files:
+  - dist/**/*
+  - assets/logo.png
+  - assets/tray.png
+  - assets/logo.icns
+  - assets/logo.ico
+  - scripts/windows-fullscreen-monitor.ps1
+  - package.json
+
+asar: true
+asarUnpack:
+  - scripts/windows-fullscreen-monitor.ps1
+
+# Stable artifact names so README "latest/download" links never break
+mac:
+  category: public.app-category.entertainment
+  icon: assets/logo.icns
+  target:
+    - target: dmg
+      arch: [universal]
+  artifactName: DeskPals-mac-universal.${ext}
+  hardenedRuntime: false   # free / unsigned build
+  notarize: false          # notarization needs a paid Apple account
+
+win:
+  icon: assets/logo.ico
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: DeskPals-win-x64.${ext}
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+publish:
+  provider: github
+  owner: Sunnyth10
+  repo: companion-desk
+

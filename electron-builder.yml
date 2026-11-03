@@ -12,6 +12,7 @@ files:
   - package.json
 
 asar: true
+compression: maximum       # LZMA for NSIS, bzip2 for DMG
 asarUnpack:
   - scripts/windows-fullscreen-monitor.ps1
 
@@ -36,10 +37,6 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
-  compression: lzma          # strongest compression, reduces .exe size ~20%
-
-dmg:
-  compression: maximum       # compress the macOS DMG
 
 publish:
   provider: github

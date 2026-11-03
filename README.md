@@ -74,11 +74,11 @@ You can click them, drag them, pet them, ignore them, or let them wander. They r
 
 ## ⬇️ Download DeskPals
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.0/DeskPals-mac-universal.dmg">
+<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.1/DeskPals-mac-universal.dmg">
   <img src="https://img.shields.io/badge/Download-macOS%20Universal%20(.dmg)-black?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS" height="50">
 </a>
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.0/DeskPals-win-x64.exe">
+<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.1/DeskPals-win-x64.exe">
   <img src="https://img.shields.io/badge/Download-Windows%20x64%20(.exe)-0078d4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows" height="50">
 </a>
 
@@ -247,11 +247,11 @@ There are **5 companions** in the current release.
 [![GitHub release](https://img.shields.io/github/v/release/Sunnyth10/Deskpals?label=latest&style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
 [![GitHub downloads](https://img.shields.io/github/downloads/Sunnyth10/Deskpals/total?style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.0/DeskPals-mac-universal.dmg">
+<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.1/DeskPals-mac-universal.dmg">
   <img alt="Download for macOS" src="https://img.shields.io/badge/Download-macOS%20Universal-black?style=for-the-badge&logo=apple">
 </a>
 &nbsp;
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.0/DeskPals-win-x64.exe">
+<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.1/DeskPals-win-x64.exe">
   <img alt="Download for Windows" src="https://img.shields.io/badge/Download-Windows%20x64-0078d4?style=for-the-badge&logo=windows">
 </a>
 

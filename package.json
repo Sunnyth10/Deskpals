@@ -1,6 +1,6 @@
 {
   "name": "companion-desk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Desktop companions (cat, fox, ghost, robot, web hero) in a click-through Electron overlay",
   "main": "dist/main.js",
   "scripts": {

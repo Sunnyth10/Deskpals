@@ -44,4 +44,5 @@ publish:
   provider: github
   owner: Sunnyth10
   repo: Deskpals
+  releaseType: release
 

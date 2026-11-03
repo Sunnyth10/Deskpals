@@ -72,6 +72,16 @@ You can click them, drag them, pet them, ignore them, or let them wander. They r
 
 There are **5 companions** in the current release.
 
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/images/cat.png" width="120" alt="Pink and white kawaii cat companion"><br><strong>Cat</strong></td>
+    <td align="center"><img src="docs/images/fox.png" width="120" alt="Glowing orange chibi fox companion"><br><strong>Fox</strong></td>
+    <td align="center"><img src="docs/images/robot.png" width="120" alt="Blue glowing robot companion"><br><strong>Robot</strong></td>
+    <td align="center"><img src="docs/images/web-hero.png" width="120" alt="Web-slinging hero companion"><br><strong>Web Hero</strong></td>
+    <td align="center"><img src="docs/images/ghost.png" width="120" alt="Lavender glowing ghost companion"><br><strong>Ghost</strong></td>
+  </tr>
+</table>
+
 | # | Companion | Vibe | Personality | Signature moves |
 |---|-----------|------|-------------|-----------------|
 | 1 | 🐱 **Cat** | Pink and white, fluffy, judgy | Lazy, curious, occasionally chaotic | Loaf, stretch, grooming, chasing your cursor, knocking things off the taskbar edge, 3 a.m. zoomies |
@@ -83,27 +93,42 @@ There are **5 companions** in the current release.
 ### Companion details
 
 #### 🐱 Cat
+
+<p align="center"><img src="docs/images/cat.png" width="150" alt="Pink and white kawaii cat companion"></p>
+
 - **States:** idle, walk, run, sit, sleep, groom, stretch, pounce, drag, fall, land, happy, annoyed
 - **Likes:** your cursor, quiet moments, sitting near the corners of your screen
 - **Dislikes:** being picked up for too long
 - **Easter egg:** leave your computer idle past midnight and she gets the zoomies.
 
 #### 🦊 Fox
+
+<p align="center"><img src="docs/images/fox.png" width="150" alt="Glowing orange chibi fox companion"></p>
+
 - **States:** idle, trot, sprint, sneak, pounce, sleep (curled up), tail-wag, drag, fall, land, curious
 - **Likes:** chasing the cursor, hiding at window edges
 - **Easter egg:** double-click and he does a high leap with a spin.
 
 #### 🤖 Robot
+
+<p align="center"><img src="docs/images/robot.png" width="150" alt="Blue glowing robot companion"></p>
+
 - **States:** idle, walk, scan, glitch, dance, low-battery, charging, drag, fall, land, beep
 - **Likes:** order, clean desktops, being asked to dance
 - **Easter egg:** triple-click and it "reboots" with a boot-up animation.
 
 #### 🕸️ Web Hero
+
+<p align="center"><img src="docs/images/web-hero.png" width="150" alt="Web-slinging hero companion"></p>
+
 - **States:** idle, crouch, run, jump, web-swing, wall-crawl, ceiling-hang, hero-landing, drag, fall, pose
 - **Likes:** swinging between screen edges, dramatic landings
 - **Easter egg:** drag him far and release and he shoots a web line back to where you grabbed him.
 
 #### 👻 Ghost
+
+<p align="center"><img src="docs/images/ghost.png" width="150" alt="Lavender glowing ghost companion"></p>
+
 - **States:** float, drift, peek, hide, boo, fade-out, fade-in, drag, giggle, sleepy
 - **Likes:** floating near text boxes and input bars, startling you (gently)
 - **Easter egg:** the longer you ignore him, the more translucent he gets, until you click him and he pops back to full opacity.

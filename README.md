@@ -7,7 +7,8 @@
 | |_| |  __/\__ \   < |  __/ (_| || \__ \
 |____/ \___||___/_|\_\|_|   \__,_||_|___/
 ```
-
+</div>
+<div>
 # 🐾 DeskPals — your screen is no longer lonely
 
 **Tiny animated companions that live on top of everything you do.**

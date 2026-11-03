@@ -29,7 +29,8 @@
 ## 📖 Table of Contents
 
 1. [What is this?](#-what-is-this)
-2. [Meet the companions](#-meet-the-companions)
+2. [⬇️ Download DeskPals](#️-download-deskpals)
+3. [Meet the companions](#-meet-the-companions)
 3. [Features](#-features)
 4. [Availability: macOS and Windows](#-availability-macos-and-windows)
 5. [System requirements](#-system-requirements)
@@ -66,6 +67,22 @@ In practice that looks like this:
 - A **robot** pacing along the top edge of a window.
 
 You can click them, drag them, pet them, ignore them, or let them wander. They react to your mouse, your idle time and the time of day.
+
+---
+
+<div align="center">
+
+## ⬇️ Download DeskPals
+
+<a href="https://github.com/Sunnyth10/Deskpals/releases/latest/download/DeskPals-mac-universal.dmg">
+  <img src="https://img.shields.io/badge/⬇%EF%B8%8F%20Download%20for%20macOS-black?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS" height="50">
+</a>
+
+<a href="https://github.com/Sunnyth10/Deskpals/releases/latest/download/DeskPals-win-x64.exe">
+  <img src="https://img.shields.io/badge/⬇%EF%B8%8F%20Download%20for%20Windows-0078d4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows" height="50">
+</a>
+
+</div>
 
 ---
 

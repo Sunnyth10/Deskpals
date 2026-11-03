@@ -36,14 +36,9 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
-  compression: lzma          # strongest compression, reduces .exe size ~20%
-
-dmg:
-  compression: maximum       # compress the macOS DMG
 
 publish:
   provider: github
   owner: Sunnyth10
   repo: Deskpals
   releaseType: release
-

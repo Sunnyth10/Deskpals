@@ -26,16 +26,21 @@
     "directories": { "output": "release" },
     "files": [
       "dist/**/*",
+      "assets/logo.png",
       "assets/tray.png",
+      "assets/logo.icns",
+      "assets/logo.ico",
       "scripts/windows-fullscreen-monitor.ps1",
       "package.json"
     ],
     "asar": true,
     "asarUnpack": ["scripts/windows-fullscreen-monitor.ps1"],
     "mac": {
+      "icon": "assets/logo.icns",
       "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }]
     },
     "win": {
+      "icon": "assets/logo.ico",
       "target": [{ "target": "nsis", "arch": ["x64"] }]
     },
     "nsis": {

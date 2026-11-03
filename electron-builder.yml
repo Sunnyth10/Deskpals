@@ -7,10 +7,7 @@ directories:
 # Files packed into the asar / installer
 files:
   - dist/**/*
-  - assets/logo.png
   - assets/tray.png
-  - assets/logo.icns
-  - assets/logo.ico
   - scripts/windows-fullscreen-monitor.ps1
   - package.json
 

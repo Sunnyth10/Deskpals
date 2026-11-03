@@ -27,6 +27,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Build TypeScript
+        run: npm run build
+
       # Build + upload installers to the GitHub Release for this tag
       - name: Build and publish
         run: npx electron-builder --publish always

@@ -1,28 +1,18 @@
-<div align="center">
+<h1 align="center">🐾 DeskPals</h1>
 
-```
- ____            _     ____        _
-|  _ \  ___  ___| | __|  _ \ __ _ | |___
-| | | |/ _ \/ __| |/ /| |_) / _` || / __|
-| |_| |  __/\__ \   < |  __/ (_| || \__ \
-|____/ \___||___/_|\_\|_|   \__,_||_|___/
-```
-</div>
-<div>
-# 🐾 DeskPals — your screen is no longer lonely
+<h3 align="center">Your screen is no longer lonely</h3>
 
-**Tiny animated companions that live on top of everything you do.**
-Watch YouTube. Chat on WhatsApp. Write code. A cat, a fox, a robot, a web-slinging hero or a ghost hangs out right there with you.
+<p align="center"><strong>Tiny animated companions that live on top of everything you do.</strong> Watch YouTube. Chat on WhatsApp. Write code. A cat, a fox, a robot, a web-slinging hero or a ghost hangs out right there with you.</p>
 
-![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-blueviolet?style=for-the-badge)
-![Companions](https://img.shields.io/badge/companions-5-ff69b4?style=for-the-badge)
-![Status](https://img.shields.io/badge/status-alpha-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
-![Vibes](https://img.shields.io/badge/vibes-immaculate-yellow?style=for-the-badge)
+<p align="center">
+  <img alt="Platform: macOS and Windows" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-blueviolet?style=for-the-badge">
+  <img alt="5 companions" src="https://img.shields.io/badge/companions-5-ff69b4?style=for-the-badge">
+  <img alt="Status: alpha" src="https://img.shields.io/badge/status-alpha-orange?style=for-the-badge">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge">
+  <img alt="Vibes: immaculate" src="https://img.shields.io/badge/vibes-immaculate-yellow?style=for-the-badge">
+</p>
 
-🐱 &nbsp; 🦊 &nbsp; 🤖 &nbsp; 🕸️ &nbsp; 👻
-
-</div>
+<p align="center">🐱 &nbsp; 🦊 &nbsp; 🤖 &nbsp; 🕸️ &nbsp; 👻</p>
 
 > **Heads up:** "DeskPals" is a placeholder name. Rename it however you like (search and replace `DeskPals` across the repo). Anything marked `TODO` or inside `<angle brackets>` is meant for you to fill in.
 

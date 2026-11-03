@@ -744,7 +744,7 @@ DeskPals is built to be **private and local**.
 | RAM (all 5) | under 300 MB |
 | Frame rate | 60 FPS active, ~10 FPS idle |
 | Startup time | under 2 seconds |
-| Installer size | ~100 MB (Electron) |
+| Installer size | macOS ~181 MB · Windows ~89 MB |
 
 Tips if it feels heavy: lower `maxFps`, disable unused companions and turn off window-edge interaction.
 

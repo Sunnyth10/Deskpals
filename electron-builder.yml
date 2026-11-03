@@ -24,8 +24,8 @@ mac:
   icon: assets/logo.icns
   target:
     - target: dmg
-      arch: [universal]
-  artifactName: DeskPals-mac-universal.${ext}
+      arch: [arm64, x64]
+  artifactName: DeskPals-mac-${arch}.${ext}
   hardenedRuntime: false   # free / unsigned build
   notarize: false          # notarization needs a paid Apple account
 

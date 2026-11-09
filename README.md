@@ -752,7 +752,7 @@ DeskPals is built to be **private and local**.
 | RAM (all 5) | under 300 MB |
 | Frame rate | 60 FPS active, ~10 FPS idle |
 | Startup time | under 2 seconds |
-| Installer size | macOS ~181 MB · Windows ~89 MB |
+| Installer size | macOS ~85 MB · Windows ~79 MB |
 
 Tips if it feels heavy: lower `maxFps`, disable unused companions and turn off window-edge interaction.
 
@@ -862,8 +862,8 @@ Contributions are welcome, from bug fixes to brand new companions.
 Released under the **MIT License**. See [`LICENSE`](./LICENSE).
 
 **Credits**
-- Pixel art and animation: `<your name>`
-- Code: `<your name>` and contributors
+- Pixel art and animation: Sunnyth
+- Code: Sunnyth and contributors
 - Built with Electron, TypeScript, PixiJS and a lot of caffeine ☕
 
 ---

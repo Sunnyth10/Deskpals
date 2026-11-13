@@ -159,6 +159,14 @@ There are **5 companions** in the current release.
 
 ## 🚀 Features
 
+### Wellness & Dashboard (PawPause Inspiration)
+- 📊 **Stats Dashboard**: 4 seven-day sparkline cards (Breaks, Waters, Focus minutes, Distractions), "Companion Days" tracker, and a 52-week GitHub-style contribution heatmap powered by daily focus minutes.
+- 🐱 **Pet Selector & Previews**: Live animated canvas previews of all 5 companions with individual per-companion scale adjustment.
+- ⏰ **Smart Reminders**: Daily recurring tasks with live ticking countdowns, speech bubble alerts, companion enlargement, and native system notification fallbacks.
+- 💧 **Health Nudges**: Configurable break reminders (with optional fullscreen break overlay) and water hydration tracking.
+- 🎯 **Focus Sessions & Distraction Shield**: Integrated Pomodoro-style focus timer with active window distraction detection against custom blocked apps and keywords.
+- 💬 **Speech Bubbles & Countdown Pills**: Anchored procedural balloons over your companions with animated entrance, auto-dismiss, and non-interactive Lyrics Mode support.
+
 ### Core
 - 🪟 **Transparent always-on-top overlay.** Companions float above all apps.
 - 🖱️ **Click-through by default.** Your mouse passes straight through empty areas, and only the companion's own sprite catches clicks.
@@ -692,31 +700,63 @@ GitHub Actions builds on `macos-latest` and `windows-latest` runners. Pushing a 
 
 ## ⚙️ Configuration reference
 
-Settings are stored as JSON.
+Settings and wellness stats are stored locally in JSON format with automatic schema migration and fallback defaults.
 
-| OS | Location |
-|----|----------|
-| macOS | `~/Library/Application Support/DeskPals/config.json` |
-| Windows | `%APPDATA%\DeskPals\config.json` |
+| OS | Settings File | Stats History File |
+|----|---------------|-------------------|
+| macOS | `~/Library/Application Support/DeskPals/settings.json` | `~/Library/Application Support/DeskPals/stats.json` |
+| Windows | `%APPDATA%\DeskPals\settings.json` | `%APPDATA%\DeskPals\stats.json` |
 
 ```json
 {
-  "companions": {
-    "cat":      { "enabled": true,  "scale": 1.5 },
-    "fox":      { "enabled": false, "scale": 1.5 },
-    "robot":    { "enabled": false, "scale": 1.5 },
-    "web-hero": { "enabled": false, "scale": 1.5 },
-    "ghost":    { "enabled": true,  "scale": 1.5 }
+  "companion": "cat",
+  "companionScales": {
+    "cat": 100,
+    "fox": 100,
+    "ghost": 100,
+    "robot": 100,
+    "webhero": 100
   },
-  "sound": { "enabled": false, "volume": 0.4 },
-  "launchAtLogin": true,
-  "doNotDisturb": { "hideOnFullscreen": true, "hideOnScreenShare": true },
-  "displays": "all",
-  "followCursor": true,
-  "windowEdgeInteraction": false,
-  "showOnAllDesktops": true,
-  "idleSleepAfterSeconds": 300,
-  "maxFps": 60
+  "activeTab": "stats",
+  "language": "en",
+  "appearance": {
+    "petSizePercent": 100,
+    "lyricsMode": false,
+    "bubbleDurationSeconds": 6
+  },
+  "motion": {
+    "autoRun": true,
+    "runDirection": "both",
+    "runFrequencySeconds": 20,
+    "runDurationSeconds": 4,
+    "idleMotionFrequencySeconds": 8
+  },
+  "health": {
+    "breakEnabled": true,
+    "breakIntervalMinutes": 45,
+    "breakModeFullscreen": false,
+    "waterEnabled": true,
+    "waterIntervalMinutes": 60,
+    "waterDailyGoal": 8
+  },
+  "focus": {
+    "enabled": false,
+    "sessionDurationMinutes": 25,
+    "blockedApps": ["Twitter", "Discord", "Steam", "Reddit"],
+    "blockedKeywords": ["social", "games", "youtube"]
+  },
+  "reminders": [
+    {
+      "id": "1731500000000",
+      "task": "Stand up and stretch",
+      "time": "14:00",
+      "enabled": true,
+      "petCountdown": true,
+      "showBeforeMinutes": 10,
+      "enlargeOnAlert": true
+    }
+  ],
+  "firstLaunchDate": "2026-11-01"
 }
 ```
 
@@ -724,21 +764,19 @@ Settings are stored as JSON.
 
 ## 🔐 Permissions and privacy
 
-DeskPals is built to be **private and local**.
+DeskPals is built to be **100% private and offline-first**.
 
-- ❌ No account or sign-in
-- ❌ No analytics or telemetry
-- ❌ No screen recording or screenshots
-- ❌ No keyboard logging
-- ✅ Everything runs on your machine
+- ❌ No account, cloud sync, or telemetry
+- ❌ No screen recording or key logging
+- ❌ No window content inspection (only memory-held process names and titles are matched locally)
+- ✅ Everything runs purely on your machine
 
-| Permission | Needed for | Required? |
-|-----------|-----------|-----------|
-| Cursor position | Following and chasing the mouse | Yes (no special permission) |
-| Idle time | Sleeping when you're away | Yes (no special permission) |
-| **macOS Accessibility** | Sitting on top of other windows' title bars | Optional |
-| Launch at login | Starting with your computer | Optional |
-| Network | Auto-update checks only | Optional (can be disabled) |
+| Permission | Needed for | Required? | Platform Notes |
+|-----------|-----------|-----------|----------------|
+| Cursor position | Following and chasing the mouse | Built-in | Standard mouse event polling |
+| Idle time | Companion sleep & rest states | Built-in | System idle timer |
+| **macOS Accessibility** | Focus mode distraction detection | Optional | Used purely to inspect foreground application name via AppleScript/JXA in memory. If not granted, Focus mode operates without background distraction warnings. |
+| Launch at login | Starting with your computer | Optional | Configured in Tray menu or settings |
 
 ---
 
@@ -864,7 +902,8 @@ Released under the **MIT License**. See [`LICENSE`](./LICENSE).
 **Credits**
 - Pixel art and animation: `<your name>`
 - Code: `<your name>` and contributors
-- Built with Electron, TypeScript, PixiJS and a lot of caffeine ☕
+- Feature inspiration: [PawPause](https://github.com/angziii/PawPause) (MIT)
+- Built with Electron, TypeScript, Canvas 2D and a lot of caffeine ☕
 
 ---
 

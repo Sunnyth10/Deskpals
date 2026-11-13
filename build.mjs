@@ -4,10 +4,16 @@ import { copyFileSync, mkdirSync } from 'node:fs';
 mkdirSync('dist', { recursive: true });
 
 if (process.argv.includes('--smoke')) {
-  await build({
-    entryPoints: ['test/smoke.ts'], outfile: 'dist-test/smoke.js',
-    bundle: true, platform: 'node', format: 'cjs', target: 'node20', logLevel: 'info',
-  });
+  await Promise.all([
+    build({
+      entryPoints: ['test/smoke.ts'], outfile: 'dist-test/smoke.js',
+      bundle: true, platform: 'node', format: 'cjs', target: 'node20', logLevel: 'info',
+    }),
+    build({
+      entryPoints: ['test/wellness.test.ts'], outfile: 'dist-test/wellness.js',
+      bundle: true, platform: 'node', format: 'cjs', target: 'node20', logLevel: 'info',
+    }),
+  ]);
 } else {
   const common = { bundle: true, logLevel: 'info', sourcemap: false };
   await Promise.all([

@@ -133,6 +133,24 @@ api.onCompanions((names) => {
   stage.setCompanions(companionNames);
   wake();
 });
+api.onBubble((msg) => {
+  stage.showBubble(msg);
+  wake();
+});
+api.onCountdown((payload) => {
+  stage.setCountdown(payload);
+  wake();
+});
+api.onEnlarge((multiplier, duration) => {
+  stage.triggerEnlarge(multiplier, duration);
+  wake();
+});
+api.onSettings((settings) => {
+  host.setLyricsMode(settings.appearance.lyricsMode);
+  stage.setScales(settings.appearance.petSizePercent, settings.companionScales);
+  stage.setMotion(settings.motion);
+  wake();
+});
 api.onEvent((name) => { stage.trigger(name as LivingEventType); wake(); });
 api.onPause((p) => {
   paused = p;

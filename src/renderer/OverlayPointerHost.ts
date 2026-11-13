@@ -27,6 +27,7 @@ export class OverlayPointerHost {
   private interactive = false;
   private cursor: { x: number; y: number } | null = null;
   private disposed = false;
+  private lyricsMode = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -44,7 +45,17 @@ export class OverlayPointerHost {
     window.addEventListener('blur', this.onBlur);
   }
 
+  public setLyricsMode(enabled: boolean): void {
+    this.lyricsMode = enabled;
+    if (enabled) {
+      this.release();
+    } else {
+      this.recheck();
+    }
+  }
+
   private topmostAt(x: number, y: number): InteractiveCompanion | null {
+    if (this.lyricsMode) return null;
     const list = this.getCompanions();
     for (let i = list.length - 1; i >= 0; i--) {
       if (list[i].containsPoint(x, y)) return list[i];

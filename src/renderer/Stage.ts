@@ -1,9 +1,7 @@
 /**
  * Stage
- * Owns the companions on one overlay and drives them exactly like the extension's
- * CanvasRenderer did: the physics world is the whole canvas, the floor is 4px above its
- * bottom edge, X is clamped by CompanionBounds unless the companion is held or airborne.
- * No Electron / DOM dependencies, so it can be smoke-tested in plain Node.
+ * Owns the companions on one overlay and drives them with Canvas procedural physics.
+ * Extended with speech bubbles, per-companion scaling, and alert enlargement.
  */
 import { LivingEventType, ZoneBounds } from '../core/types';
 import { ParticleEngine } from '../engine/particles/ParticleEngine';
@@ -13,6 +11,9 @@ import { GhostCompanion } from './companions/GhostCompanion';
 import { RobotCompanion } from './companions/RobotCompanion';
 import { WebHeroCompanion } from './companions/WebHeroCompanion';
 import { clampCompanionX } from './companions/CompanionBounds';
+import { SpeechBubbleManager } from './SpeechBubble';
+import type { SpeechBubbleMessage, CountdownPayload } from '../shared/ipc-channels';
+import type { MotionSettings } from '../core/settings';
 
 export type CompanionName = 'cat' | 'fox' | 'ghost' | 'robot' | 'webhero';
 export type Companion = CatCompanion | FoxCompanion | GhostCompanion | RobotCompanion | WebHeroCompanion;
@@ -29,12 +30,47 @@ const BURST: Record<string, { count: number; colors: string[] }> = {
   buildError: { count: 8, colors: ['#f87171', '#fb923c', '#ffffff'] },
 };
 
-interface Entry { name: CompanionName; c: Companion }
+interface Entry {
+  name: CompanionName;
+  c: Companion;
+  scale: number;
+}
 
 export class Stage {
   public readonly bounds: ZoneBounds = { x: 0, y: 0, width: 800, height: 600 };
+  public readonly bubbleManager = new SpeechBubbleManager();
   private entries: Entry[] = [];
   private readonly particles = new ParticleEngine();
+
+  private globalScale = 1.0;
+  private customScales: Partial<Record<CompanionName, number>> = {};
+  private enlargeMultiplier = 1.0;
+  private enlargeEndTime = 0;
+  private enlargePeakTime = 0;
+  private motion: MotionSettings = {
+    autoRun: true,
+    runDirection: 'both',
+    runFrequencySeconds: 20,
+    runDurationSeconds: 4,
+    idleMotionFrequencySeconds: 8,
+  };
+
+  public setMotion(motion: MotionSettings): void {
+    this.motion = { ...motion };
+    for (const e of this.entries) {
+      const c = e.c as any;
+      if ('autonomous' in c) {
+        c.autonomous = motion.autoRun;
+      }
+      if (motion.runDirection === 'left') {
+        if ('facingRight' in c) c.facingRight = false;
+        if ('dir' in c) c.dir = -1;
+      } else if (motion.runDirection === 'right') {
+        if ('facingRight' in c) c.facingRight = true;
+        if ('dir' in c) c.dir = 1;
+      }
+    }
+  }
 
   public resize(width: number, height: number): void {
     this.bounds.width = Math.max(1, width);
@@ -42,6 +78,29 @@ export class Stage {
     for (const entry of this.entries) {
       entry.c.x = clampCompanionX(entry.name, entry.c.x, this.bounds);
     }
+  }
+
+  public setScales(globalPercent: number, perCompanionPercent: Record<CompanionName, number>): void {
+    this.globalScale = Math.max(0.5, Math.min(3.0, globalPercent / 100));
+    this.customScales = {};
+    for (const [k, v] of Object.entries(perCompanionPercent)) {
+      this.customScales[k as CompanionName] = Math.max(0.5, Math.min(3.0, v / 100));
+    }
+  }
+
+  public triggerEnlarge(multiplier = 1.6, durationSeconds = 3.5): void {
+    this.enlargeMultiplier = multiplier;
+    const now = performance.now();
+    this.enlargeEndTime = now + durationSeconds * 1000;
+    this.enlargePeakTime = now + (durationSeconds * 1000) * 0.3;
+  }
+
+  public showBubble(msg: SpeechBubbleMessage, defaultDuration = 6): void {
+    this.bubbleManager.showMessage(msg, defaultDuration);
+  }
+
+  public setCountdown(cd: CountdownPayload | null): void {
+    this.bubbleManager.setCountdown(cd);
   }
 
   private make(name: CompanionName, startX?: number): Companion {
@@ -71,7 +130,7 @@ export class Stage {
       const c = this.make(name, previousX);
       c.setInteractive(true);
       c.setReducedMotion(null); // follow the OS "reduce motion" setting
-      this.entries.push({ name, c });
+      this.entries.push({ name, c, scale: 1.0 });
     }
   }
 
@@ -95,24 +154,76 @@ export class Stage {
 
   public update(dt: number): void {
     for (const e of this.entries) {
+      const c = e.c as any;
+      if (this.motion.runDirection === 'left') {
+        if ('facingRight' in c && c.facingRight === true) c.facingRight = false;
+        if ('dir' in c && c.dir === 1) c.dir = -1;
+      } else if (this.motion.runDirection === 'right') {
+        if ('facingRight' in c && c.facingRight === false) c.facingRight = true;
+        if ('dir' in c && c.dir === -1) c.dir = 1;
+      }
       e.c.update(dt, this.bounds);
-      // Like the extension: no X clamp while held/airborne, it may travel anywhere.
       if (!e.c.isAirborne()) e.c.x = clampCompanionX(e.name, e.c.x, this.bounds);
     }
     this.particles.update(dt, this.bounds);
+    this.bubbleManager.update();
   }
 
   public render(ctx: CanvasRenderingContext2D): void {
-    for (const e of this.entries) e.c.render(ctx);
+    const now = performance.now();
+    let currentEnlarge = 1.0;
+
+    if (now < this.enlargeEndTime) {
+      if (now < this.enlargePeakTime) {
+        // Scaling up to peak
+        const t = (now - (this.enlargePeakTime - (this.enlargeEndTime - this.enlargePeakTime) / 2)) / (this.enlargePeakTime);
+        currentEnlarge = 1.0 + (this.enlargeMultiplier - 1.0) * Math.min(1, Math.max(0, t));
+      } else {
+        // Easing down from peak
+        const t = (this.enlargeEndTime - now) / (this.enlargeEndTime - this.enlargePeakTime);
+        currentEnlarge = 1.0 + (this.enlargeMultiplier - 1.0) * Math.min(1, Math.max(0, t));
+      }
+    }
+
+    for (const e of this.entries) {
+      const companionSpecificScale = this.customScales[e.name] ?? 1.0;
+      const totalScale = this.globalScale * companionSpecificScale * currentEnlarge;
+
+      if (Math.abs(totalScale - 1.0) > 0.02) {
+        ctx.save();
+        ctx.translate(e.c.x, e.c.y);
+        ctx.scale(totalScale, totalScale);
+        ctx.translate(-e.c.x, -e.c.y);
+        e.c.render(ctx);
+        ctx.restore();
+      } else {
+        e.c.render(ctx);
+      }
+    }
+
     if (this.particles.getParticleCount() > 0) this.particles.render(ctx);
+
+    // Render speech bubbles anchored on the lead companion
+    const lead = this.entries[0]?.c;
+    if (lead) {
+      this.bubbleManager.render(ctx, lead.x, lead.y);
+    }
   }
 
   /** False when there is nothing to draw: the render loop can stop completely. */
   public needsFrames(): boolean {
-    return this.entries.length > 0 || this.particles.getParticleCount() > 0;
+    return (
+      this.entries.length > 0 ||
+      this.particles.getParticleCount() > 0 ||
+      this.bubbleManager.hasContent() ||
+      performance.now() < this.enlargeEndTime
+    );
   }
 
   public targetFps(): number {
+    if (performance.now() < this.enlargeEndTime || this.bubbleManager.hasContent()) {
+      return FPS_ACTIVE;
+    }
     let anyAwake = this.particles.getParticleCount() > 0;
     for (const e of this.entries) {
       if (e.c.isGrabbed() || e.c.isAirborne() || e.c.isPointerEngaged()) return FPS_ACTIVE;
@@ -131,5 +242,6 @@ export class Stage {
     for (const e of this.entries) { e.c.cancelInteraction(); e.c.dispose(); }
     this.entries = [];
     this.particles.clear();
+    this.bubbleManager.dismiss();
   }
 }

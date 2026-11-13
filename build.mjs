@@ -21,8 +21,13 @@ if (process.argv.includes('--smoke')) {
       platform: 'node', format: 'cjs', target: 'node20', external: ['electron'] }),
     build({ ...common, entryPoints: ['src/preload/preload.ts'], outfile: 'dist/preload.js',
       platform: 'node', format: 'cjs', target: 'node20', external: ['electron'] }),
+    build({ ...common, entryPoints: ['src/preload/dashboardPreload.ts'], outfile: 'dist/dashboardPreload.js',
+      platform: 'node', format: 'cjs', target: 'node20', external: ['electron'] }),
     build({ ...common, entryPoints: ['src/renderer/renderer.ts'], outfile: 'dist/renderer.js',
+      platform: 'browser', format: 'iife', target: 'chrome120', minify: true }),
+    build({ ...common, entryPoints: ['src/renderer/dashboard/dashboard.ts'], outfile: 'dist/dashboard.js',
       platform: 'browser', format: 'iife', target: 'chrome120', minify: true }),
   ]);
   copyFileSync('src/renderer/index.html', 'dist/index.html');
+  copyFileSync('src/renderer/dashboard/index.html', 'dist/dashboard.html');
 }

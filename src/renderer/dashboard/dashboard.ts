@@ -1,0 +1,103 @@
+import type { DashboardApi } from '../../preload/dashboardPreload';
+import type { DashboardTab, Settings } from '../../core/settings';
+import { t } from '../../core/i18n';
+import { renderStatsTab } from './tabStats';
+import { renderPetTab } from './tabPet';
+import { renderRemindersTab } from './tabReminders';
+import { renderSettingsTab } from './tabSettings';
+
+declare global {
+  interface Window {
+    deskpals: DashboardApi;
+  }
+}
+
+let currentSettings: Settings | null = null;
+let currentTab: DashboardTab = 'stats';
+let cleanupCurrentTab: (() => void) | null = null;
+
+const tabContent = document.getElementById('tab-content') as HTMLElement;
+const tabBar = document.getElementById('tab-bar') as HTMLElement;
+
+function updateTabButtons(active: DashboardTab, lang: Settings['language']): void {
+  const labelStats = document.getElementById('label-tab-stats');
+  const labelPet = document.getElementById('label-tab-pet');
+  const labelReminders = document.getElementById('label-tab-reminders');
+  const labelSettings = document.getElementById('label-tab-settings');
+
+  if (labelStats) labelStats.innerText = t('nav_stats', lang);
+  if (labelPet) labelPet.innerText = t('nav_pet', lang);
+  if (labelReminders) labelReminders.innerText = t('nav_reminders', lang);
+  if (labelSettings) labelSettings.innerText = t('nav_settings', lang);
+
+  const buttons = tabBar.querySelectorAll<HTMLButtonElement>('.tab-btn');
+  buttons.forEach((btn) => {
+    const tabName = btn.dataset.tab as DashboardTab;
+    if (tabName === active) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+async function switchTab(tab: DashboardTab): Promise<void> {
+  if (!currentSettings) return;
+
+  if (cleanupCurrentTab) {
+    cleanupCurrentTab();
+    cleanupCurrentTab = null;
+  }
+
+  currentTab = tab;
+  updateTabButtons(tab, currentSettings.language);
+  window.deskpals.setTab(tab);
+
+  switch (tab) {
+    case 'stats':
+      cleanupCurrentTab = await renderStatsTab(tabContent, currentSettings);
+      break;
+    case 'pet':
+      renderPetTab(tabContent, currentSettings, (updated) => {
+        currentSettings = updated;
+      });
+      break;
+    case 'reminders':
+      cleanupCurrentTab = renderRemindersTab(tabContent, currentSettings);
+      break;
+    case 'settings':
+      cleanupCurrentTab = renderSettingsTab(tabContent, currentSettings, (updated) => {
+        const langChanged = currentSettings?.language !== updated.language;
+        currentSettings = updated;
+        if (langChanged) {
+          updateTabButtons(currentTab, updated.language);
+          switchTab('settings');
+        }
+      });
+      break;
+  }
+}
+
+async function init(): Promise<void> {
+  currentSettings = await window.deskpals.getSettings();
+  currentTab = currentSettings.activeTab ?? 'stats';
+
+  tabBar.addEventListener('click', (e) => {
+    const target = (e.target as HTMLElement).closest<HTMLButtonElement>('.tab-btn');
+    if (!target || !target.dataset.tab) return;
+    const tab = target.dataset.tab as DashboardTab;
+    if (tab !== currentTab) {
+      void switchTab(tab);
+    }
+  });
+
+  window.deskpals.onSettingsUpdated((newSettings) => {
+    currentSettings = newSettings;
+  });
+
+  void switchTab(currentTab);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  void init();
+});

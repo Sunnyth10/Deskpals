@@ -1,4 +1,5 @@
 import type { SupportedLanguage } from './i18n';
+export type { SupportedLanguage };
 import type { ReminderItem } from './reminders';
 import { formatDateKey } from './stats';
 

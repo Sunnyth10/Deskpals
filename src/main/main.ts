@@ -18,7 +18,6 @@ import {
   ipcMain,
   nativeImage,
   screen,
-  shell,
   powerMonitor,
   Notification,
 } from 'electron';
@@ -542,20 +541,6 @@ function buildMenu(): Menu {
       type: 'checkbox',
       checked: app.getLoginItemSettings().openAtLogin,
       click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked }),
-    },
-    {
-      label: 'Show log',
-      click: () => {
-        try {
-          fs.mkdirSync(path.dirname(logFile()), { recursive: true });
-          if (!fs.existsSync(logFile())) fs.writeFileSync(logFile(), '');
-          void shell.openPath(logFile()).then((error) => {
-            if (error) logError('could not open log', error);
-          });
-        } catch (error) {
-          logError('could not open log', error);
-        }
-      },
     },
     { type: 'separator' },
     { label: 'Quit', role: 'quit' },

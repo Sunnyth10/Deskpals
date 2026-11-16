@@ -14,6 +14,7 @@ declare global {
 export function renderTodoTab(container: HTMLElement, settings: Settings): () => void {
   const lang = settings.language;
   let isCompletedOpen = true;
+  let currentFilter: 'all' | 'open' | 'completed' = 'all';
 
   async function loadAndRender(): Promise<void> {
     container.innerHTML = '';
@@ -42,7 +43,7 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
     summaryBanner.style.display = 'flex';
     summaryBanner.style.alignItems = 'center';
     summaryBanner.style.justifyContent = 'space-between';
-    summaryBanner.style.padding = '8px 14px';
+    summaryBanner.style.padding = '10px 14px';
     summaryBanner.style.borderRadius = '10px';
     summaryBanner.style.background = 'rgba(168, 85, 247, 0.08)';
     summaryBanner.style.border = '1px solid rgba(168, 85, 247, 0.2)';
@@ -92,17 +93,17 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
     optNormal.innerText = `● ${t('todo_priority_normal', lang)}`;
     optNormal.selected = true;
 
-    const optLow = document.createElement('option');
-    optLow.value = 'low';
-    optLow.innerText = `● ${t('todo_priority_low', lang)}`;
-
     const optHigh = document.createElement('option');
     optHigh.value = 'high';
-    optHigh.innerText = `● ${t('todo_priority_high', lang)}`;
+    optHigh.innerText = `🔥 ${t('todo_priority_high', lang)}`;
+
+    const optLow = document.createElement('option');
+    optLow.value = 'low';
+    optLow.innerText = `↓ ${t('todo_priority_low', lang)}`;
 
     prioritySelect.appendChild(optNormal);
-    prioritySelect.appendChild(optLow);
     prioritySelect.appendChild(optHigh);
+    prioritySelect.appendChild(optLow);
 
     const addBtn = document.createElement('button');
     addBtn.type = 'submit';
@@ -119,6 +120,7 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
       const val = textInput.value.trim();
       if (!val) return;
       textInput.value = '';
+      textInput.focus();
       await window.deskpals.addTodo(val, prioritySelect.value as TodoPriority);
     });
 
@@ -129,20 +131,67 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
     const { card: listCard, body: listBody } = createCard('📋 Task List');
     listBody.style.display = 'flex';
     listBody.style.flexDirection = 'column';
-    listBody.style.gap = '8px';
+    listBody.style.gap = '10px';
+
+    // Filter Buttons Bar
+    const filterRow = document.createElement('div');
+    filterRow.style.display = 'flex';
+    filterRow.style.gap = '6px';
+    filterRow.style.alignItems = 'center';
+    filterRow.style.paddingBottom = '4px';
+
+    const filters: Array<{ id: 'all' | 'open' | 'completed'; label: string; count: number }> = [
+      { id: 'all', label: 'All', count: todos.length },
+      { id: 'open', label: 'Active', count: openCount },
+      { id: 'completed', label: 'Completed', count: todos.length - openCount },
+    ];
+
+    for (const f of filters) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      const isActive = currentFilter === f.id;
+      btn.style.padding = '4px 10px';
+      btn.style.fontSize = '12px';
+      btn.style.fontWeight = isActive ? '700' : '500';
+      btn.style.borderRadius = '6px';
+      btn.style.border = isActive ? '1px solid var(--primary)' : '1px solid var(--border)';
+      btn.style.background = isActive ? 'rgba(168, 85, 247, 0.18)' : 'rgba(255, 255, 255, 0.03)';
+      btn.style.color = isActive ? '#fff' : 'var(--text-muted)';
+      btn.style.cursor = 'pointer';
+      btn.style.transition = 'all 0.15s ease';
+      btn.innerText = `${f.label} (${f.count})`;
+      btn.addEventListener('click', () => {
+        currentFilter = f.id;
+        void loadAndRender();
+      });
+      filterRow.appendChild(btn);
+    }
+    listBody.appendChild(filterRow);
 
     const openTasks = todos.filter((t) => !t.completed);
     const completedTasks = todos.filter((t) => t.completed);
 
-    if (todos.length === 0) {
+    const filteredTasks =
+      currentFilter === 'open'
+        ? openTasks
+        : currentFilter === 'completed'
+          ? completedTasks
+          : todos;
+
+    if (filteredTasks.length === 0) {
       const emptyEl = document.createElement('div');
       emptyEl.style.padding = '24px 0';
       emptyEl.style.textAlign = 'center';
       emptyEl.style.color = 'var(--text-muted)';
       emptyEl.style.fontSize = '13px';
-      emptyEl.innerText = t('todo_empty', lang);
+      emptyEl.innerText =
+        currentFilter === 'completed'
+          ? 'No completed tasks yet.'
+          : currentFilter === 'open'
+            ? 'All caught up! No active tasks.'
+            : t('todo_empty', lang);
       listBody.appendChild(emptyEl);
-    } else {
+    } else if (currentFilter === 'all') {
       // 1. Open tasks
       const openContainer = document.createElement('div');
       openContainer.style.display = 'flex';
@@ -154,7 +203,7 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
       }
       listBody.appendChild(openContainer);
 
-      // 2. Completed section
+      // 2. Completed section with Accordion
       if (completedTasks.length > 0) {
         const completedSection = document.createElement('div');
         completedSection.style.marginTop = '12px';
@@ -223,6 +272,32 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
         completedSection.appendChild(compContainer);
         listBody.appendChild(completedSection);
       }
+    } else {
+      // Open or Completed filtered view
+      const containerEl = document.createElement('div');
+      containerEl.style.display = 'flex';
+      containerEl.style.flexDirection = 'column';
+      containerEl.style.gap = '6px';
+
+      for (const item of filteredTasks) {
+        containerEl.appendChild(createTaskItemRow(item));
+      }
+      listBody.appendChild(containerEl);
+
+      if (currentFilter === 'completed' && completedTasks.length > 0) {
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'btn-secondary';
+        clearBtn.style.fontSize = '11px';
+        clearBtn.style.padding = '5px 12px';
+        clearBtn.style.alignSelf = 'flex-end';
+        clearBtn.style.marginTop = '6px';
+        clearBtn.innerText = t('todo_clear_completed', lang);
+        clearBtn.addEventListener('click', async () => {
+          await window.deskpals.clearCompletedTodos();
+        });
+        listBody.appendChild(clearBtn);
+      }
     }
 
     container.appendChild(listCard);
@@ -238,6 +313,16 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
     row.style.background = item.completed ? 'rgba(255, 255, 255, 0.015)' : 'rgba(255, 255, 255, 0.04)';
     row.style.border = '1px solid var(--border)';
     row.style.gap = '10px';
+    row.style.transition = 'background 0.15s ease, border-color 0.15s ease';
+
+    row.addEventListener('mouseenter', () => {
+      row.style.borderColor = 'rgba(168, 85, 247, 0.35)';
+      row.style.background = item.completed ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.06)';
+    });
+    row.addEventListener('mouseleave', () => {
+      row.style.borderColor = 'var(--border)';
+      row.style.background = item.completed ? 'rgba(255, 255, 255, 0.015)' : 'rgba(255, 255, 255, 0.04)';
+    });
 
     const left = document.createElement('div');
     left.style.display = 'flex';
@@ -258,7 +343,7 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
       await window.deskpals.toggleTodo(item.id);
     });
 
-    // Priority dot
+    // Priority indicator dot
     const dot = document.createElement('span');
     dot.innerText = '●';
     dot.style.fontSize = '12px';
@@ -275,7 +360,7 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
 
     // Title (Inline editable, strictly textContent)
     const titleSpan = document.createElement('span');
-    titleSpan.textContent = item.text; // Strictly textContent for security
+    titleSpan.textContent = item.text;
     titleSpan.style.fontSize = '13px';
     titleSpan.style.cursor = 'text';
     titleSpan.style.flex = '1';
@@ -345,6 +430,64 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
     left.appendChild(dot);
     left.appendChild(titleSpan);
 
+    // Right Controls (Priority Tag Badge + Delete Button)
+    const right = document.createElement('div');
+    right.style.display = 'flex';
+    right.style.alignItems = 'center';
+    right.style.gap = '8px';
+    right.style.flexShrink = '0';
+
+    // Priority Tag Badge
+    const priorityTag = document.createElement('span');
+    priorityTag.style.fontSize = '11px';
+    priorityTag.style.fontWeight = '700';
+    priorityTag.style.padding = '3px 8px';
+    priorityTag.style.borderRadius = '6px';
+    priorityTag.style.cursor = 'pointer';
+    priorityTag.style.userSelect = 'none';
+    priorityTag.style.transition = 'all 0.15s ease';
+    priorityTag.style.display = 'inline-flex';
+    priorityTag.style.alignItems = 'center';
+    priorityTag.style.gap = '4px';
+
+    if (item.priority === 'high') {
+      priorityTag.style.background = 'rgba(248, 113, 113, 0.15)';
+      priorityTag.style.color = '#f87171';
+      priorityTag.style.border = '1px solid rgba(248, 113, 113, 0.35)';
+      priorityTag.innerText = `🔥 ${t('todo_priority_high', lang)}`;
+    } else if (item.priority === 'low') {
+      priorityTag.style.background = 'rgba(56, 189, 248, 0.12)';
+      priorityTag.style.color = '#38bdf8';
+      priorityTag.style.border = '1px solid rgba(56, 189, 248, 0.28)';
+      priorityTag.innerText = `↓ ${t('todo_priority_low', lang)}`;
+    } else {
+      priorityTag.style.background = 'rgba(168, 85, 247, 0.12)';
+      priorityTag.style.color = '#c084fc';
+      priorityTag.style.border = '1px solid rgba(168, 85, 247, 0.28)';
+      priorityTag.innerText = `● ${t('todo_priority_normal', lang)}`;
+    }
+
+    priorityTag.title = 'Click to switch priority';
+    priorityTag.addEventListener('mouseenter', () => {
+      priorityTag.style.transform = 'scale(1.05)';
+      priorityTag.style.filter = 'brightness(1.15)';
+    });
+    priorityTag.addEventListener('mouseleave', () => {
+      priorityTag.style.transform = 'scale(1)';
+      priorityTag.style.filter = 'none';
+    });
+
+    priorityTag.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const cycle: Record<TodoPriority, TodoPriority> = {
+        normal: 'high',
+        high: 'low',
+        low: 'normal',
+      };
+      const nextPriority = cycle[item.priority] || 'normal';
+      await window.deskpals.updateTodo(item.id, { priority: nextPriority });
+    });
+
     // Delete Button
     const delBtn = document.createElement('button');
     delBtn.type = 'button';
@@ -372,8 +515,11 @@ export function renderTodoTab(container: HTMLElement, settings: Settings): () =>
       await window.deskpals.deleteTodo(item.id);
     });
 
+    right.appendChild(priorityTag);
+    right.appendChild(delBtn);
+
     row.appendChild(left);
-    row.appendChild(delBtn);
+    row.appendChild(right);
 
     return row;
   }

@@ -917,12 +917,24 @@ ipcMain.handle(IPC_CHANNELS.REMINDERS_SAVE, (_e, reminder: ReminderItem) => {
     settings.reminders.push(reminder);
   }
   saveSettings();
+  for (const key of firedRemindersToday) {
+    if (key.includes(reminder.id)) {
+      firedRemindersToday.delete(key);
+    }
+  }
+  checkSchedulerTicker();
   return settings.reminders;
 });
 
 ipcMain.handle(IPC_CHANNELS.REMINDERS_DELETE, (_e, id: string) => {
   settings.reminders = settings.reminders.filter((r) => r.id !== id);
   saveSettings();
+  for (const key of firedRemindersToday) {
+    if (key.includes(id)) {
+      firedRemindersToday.delete(key);
+    }
+  }
+  checkSchedulerTicker();
   return settings.reminders;
 });
 
@@ -1015,14 +1027,18 @@ ipcMain.handle(IPC_CHANNELS.TODOS_ADD, (_e, payload: { text: string; priority?: 
   return sortTodos(todosCache);
 });
 
-ipcMain.handle(IPC_CHANNELS.TODOS_UPDATE, (_e, payload: { id: string; text: string }) => {
+ipcMain.handle(IPC_CHANNELS.TODOS_UPDATE, (_e, payload: { id: string; text?: string; priority?: TodoPriority }) => {
   if (typeof payload.id !== 'string') return sortTodos(todosCache);
-  const text = sanitizeTodoText(payload.text);
-  if (!text) return sortTodos(todosCache);
 
   const item = todosCache.find((t) => t.id === payload.id);
   if (item) {
-    item.text = text;
+    if (typeof payload.text === 'string') {
+      const text = sanitizeTodoText(payload.text);
+      if (text) item.text = text;
+    }
+    if (payload.priority && ['low', 'normal', 'high'].includes(payload.priority)) {
+      item.priority = payload.priority;
+    }
     saveTodos();
     broadcastTodosUpdated();
   }

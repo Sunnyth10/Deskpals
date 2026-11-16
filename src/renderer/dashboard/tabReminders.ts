@@ -87,6 +87,15 @@ export function renderRemindersTab(container: HTMLElement, settings: Settings): 
       topRow.style.gap = '10px';
       topRow.style.flexWrap = 'wrap';
 
+      // Live next due line
+      const liveLine = document.createElement('div');
+      liveLine.className = 'live-line';
+      liveLine.dataset.id = reminder.id;
+      liveLine.style.fontSize = '12px';
+      liveLine.style.fontWeight = '600';
+      liveLine.style.color = reminder.enabled ? 'var(--accent-blue)' : 'var(--text-dim)';
+      liveLine.innerText = formatLiveNext(reminder);
+
       const taskEdit = document.createElement('input');
       taskEdit.type = 'text';
       taskEdit.value = reminder.task;
@@ -96,17 +105,22 @@ export function renderRemindersTab(container: HTMLElement, settings: Settings): 
       taskEdit.addEventListener('change', async () => {
         reminder.task = taskEdit.value.trim() || 'Reminder';
         remindersList = await window.deskpals.saveReminder(reminder);
-        renderList();
       });
 
       const timeEdit = document.createElement('input');
       timeEdit.type = 'time';
       timeEdit.value = reminder.time;
-      timeEdit.addEventListener('change', async () => {
-        reminder.time = timeEdit.value;
+
+      const handleTimeChange = async () => {
+        const val = timeEdit.value;
+        if (!val || !val.includes(':')) return;
+        reminder.time = val;
+        liveLine.innerText = formatLiveNext(reminder);
         remindersList = await window.deskpals.saveReminder(reminder);
-        renderList();
-      });
+      };
+
+      timeEdit.addEventListener('input', handleTimeChange);
+      timeEdit.addEventListener('change', handleTimeChange);
 
       const btnDelete = document.createElement('button');
       btnDelete.type = 'button';
@@ -121,14 +135,6 @@ export function renderRemindersTab(container: HTMLElement, settings: Settings): 
       topRow.appendChild(timeEdit);
       topRow.appendChild(btnDelete);
       card.appendChild(topRow);
-
-      // Live next due line
-      const liveLine = document.createElement('div');
-      liveLine.className = 'live-line';
-      liveLine.style.fontSize = '12px';
-      liveLine.style.fontWeight = '600';
-      liveLine.style.color = reminder.enabled ? 'var(--accent-blue)' : 'var(--text-dim)';
-      liveLine.innerText = formatLiveNext(reminder);
       card.appendChild(liveLine);
 
       // Controls Grid
@@ -252,14 +258,22 @@ export function renderRemindersTab(container: HTMLElement, settings: Settings): 
 
   renderList();
 
-  // Periodic ticker to update "Next: HH:MM (Xmin)" live lines
+  // Periodic ticker to update "Next: HH:MM (Xmin)" live lines every 1 second
   const intervalId = window.setInterval(() => {
     const liveLines = listContainer.querySelectorAll<HTMLElement>('.live-line');
-    liveLines.forEach((el, index) => {
-      const rem = remindersList[index];
-      if (rem) el.innerText = formatLiveNext(rem);
+    liveLines.forEach((el) => {
+      const id = el.dataset.id;
+      if (!id) return;
+      const rem = remindersList.find((r) => r.id === id);
+      if (rem) {
+        try {
+          el.innerText = formatLiveNext(rem);
+        } catch {
+          /* keep ticker alive */
+        }
+      }
     });
-  }, 5000);
+  }, 1000);
 
   return () => window.clearInterval(intervalId);
 }

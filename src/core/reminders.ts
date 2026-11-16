@@ -128,18 +128,25 @@ export function formatTime12(input: Date | string): string {
  * Generates the live status text: "Next: 02:00 PM (13min)"
  */
 export function formatLiveNext(reminder: ReminderItem, fromDate: Date = new Date()): string {
-  if (!reminder.enabled) {
+  if (!reminder || !reminder.enabled) {
     return 'Disabled';
   }
-
-  const next = calculateNextOccurrence(reminder.time, fromDate);
-  const mins = getMinutesUntil(next, fromDate);
-  const timeFormatted = formatTime12(next);
-
-  if (mins < 60) {
-    return `Next: ${timeFormatted} (${mins}min)`;
+  if (!reminder.time || typeof reminder.time !== 'string' || !reminder.time.includes(':')) {
+    return '--:--';
   }
-  const hrs = Math.floor(mins / 60);
-  const remMins = mins % 60;
-  return `Next: ${timeFormatted} (${hrs}h ${remMins}m)`;
+
+  try {
+    const next = calculateNextOccurrence(reminder.time, fromDate);
+    const mins = getMinutesUntil(next, fromDate);
+    const timeFormatted = formatTime12(next);
+
+    if (mins < 60) {
+      return `Next: ${timeFormatted} (${mins}min)`;
+    }
+    const hrs = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    return `Next: ${timeFormatted} (${hrs}h ${remMins}m)`;
+  } catch {
+    return '--:--';
+  }
 }

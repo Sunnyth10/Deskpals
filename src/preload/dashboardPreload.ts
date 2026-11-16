@@ -28,7 +28,7 @@ export interface DashboardApi {
   onPomodoroStatusChanged(cb: (status: PomodoroStatus) => void): () => void;
   getTodos(): Promise<TodoItem[]>;
   addTodo(text: string, priority?: TodoPriority): Promise<TodoItem[]>;
-  updateTodo(id: string, text: string): Promise<TodoItem[]>;
+  updateTodo(id: string, updates: { text?: string; priority?: TodoPriority } | string): Promise<TodoItem[]>;
   toggleTodo(id: string): Promise<TodoItem[]>;
   deleteTodo(id: string): Promise<TodoItem[]>;
   clearCompletedTodos(): Promise<TodoItem[]>;
@@ -77,7 +77,11 @@ const api: DashboardApi = {
   },
   getTodos: () => ipcRenderer.invoke(IPC_CHANNELS.TODOS_GET),
   addTodo: (text, priority = 'normal') => ipcRenderer.invoke(IPC_CHANNELS.TODOS_ADD, { text, priority }),
-  updateTodo: (id, text) => ipcRenderer.invoke(IPC_CHANNELS.TODOS_UPDATE, { id, text }),
+  updateTodo: (id, updates) =>
+    ipcRenderer.invoke(
+      IPC_CHANNELS.TODOS_UPDATE,
+      typeof updates === 'string' ? { id, text: updates } : { id, ...updates }
+    ),
   toggleTodo: (id) => ipcRenderer.invoke(IPC_CHANNELS.TODOS_TOGGLE, id),
   deleteTodo: (id) => ipcRenderer.invoke(IPC_CHANNELS.TODOS_DELETE, id),
   clearCompletedTodos: () => ipcRenderer.invoke(IPC_CHANNELS.TODOS_CLEAR_COMPLETED),

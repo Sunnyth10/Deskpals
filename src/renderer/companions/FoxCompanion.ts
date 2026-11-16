@@ -187,6 +187,12 @@ export class FoxCompanion implements IEntity {
 
   /* ---- pointer interaction ---- */
   public containsPoint(px: number, py: number): boolean { return !this.isDisposed && this.interactive && this.gl.grab.containsPoint(px, py); }
+  public getVisualAnchor(): { x: number; y: number } {
+    return {
+      x: this.x + this.dir * 12 * SCALE,
+      y: this.y - (this.hopY + 56) * SCALE,
+    };
+  }
   public pointerDown(px: number, py: number): boolean { return !this.isDisposed && this.interactive && this.gl.grab.pointerDown(px, py); }
   public pointerMove(px: number, py: number): void { this.gl.grab.pointerMove(px, py); }
   public pointerUp(): void { this.gl.grab.pointerUp(); }

@@ -1,4 +1,5 @@
 import type { SpeechBubbleMessage, CountdownPayload } from '../shared/ipc-channels';
+import type { ZoneBounds } from '../core/types';
 
 export interface ActiveBubble {
   id: string;
@@ -83,13 +84,18 @@ export class SpeechBubbleManager {
     return this.active !== null || this.countdown !== null;
   }
 
-  public render(ctx: CanvasRenderingContext2D, companionX: number, companionY: number): void {
+  public render(
+    ctx: CanvasRenderingContext2D,
+    anchorX: number,
+    anchorY: number,
+    bounds?: ZoneBounds
+  ): void {
     const now = performance.now();
     this.update(now);
 
     // Render Countdown pill if active and no priority modal bubble
     if (this.countdown && !this.active) {
-      this.renderCountdownPill(ctx, companionX, companionY - 70, this.countdown);
+      this.renderCountdownPill(ctx, anchorX, anchorY, this.countdown, bounds);
       return;
     }
 
@@ -113,8 +119,17 @@ export class SpeechBubbleManager {
     const boxW = Math.max(120, Math.min(300, contentWidth + pad * 2 + 16));
     const boxH = bubble.subtext ? 46 : 34;
 
-    const boxX = companionX - boxW / 2;
-    const boxY = companionY - 70 - boxH;
+    // Position above the anchor point
+    let boxX = anchorX - boxW / 2;
+    let boxY = anchorY - 14 - boxH;
+
+    // Clamp inside stage bounds so the bubble doesn't get clipped off-screen
+    if (bounds) {
+      boxX = Math.max(bounds.x + 8, Math.min(bounds.x + bounds.width - boxW - 8, boxX));
+      if (boxY < bounds.y + 4) {
+        boxY = Math.max(bounds.y + 4, boxY);
+      }
+    }
 
     // Draw speech bubble body with shadow
     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
@@ -135,11 +150,13 @@ export class SpeechBubbleManager {
     ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - r, boxY + boxH);
 
     // Anchor tail pointing to companion head
-    const tailX = companionX;
-    const tailY = boxY + boxH + 8;
-    ctx.lineTo(tailX + 7, boxY + boxH);
-    ctx.lineTo(tailX, tailY);
-    ctx.lineTo(tailX - 7, boxY + boxH);
+    const tailBaseX = Math.max(boxX + 16, Math.min(boxX + boxW - 16, anchorX));
+    const tailTipX = Math.max(boxX + 8, Math.min(boxX + boxW - 8, anchorX));
+    const tailTipY = Math.max(boxY + boxH + 2, Math.min(boxY + boxH + 12, anchorY - 2));
+
+    ctx.lineTo(tailBaseX + 7, boxY + boxH);
+    ctx.lineTo(tailTipX, tailTipY);
+    ctx.lineTo(tailBaseX - 7, boxY + boxH);
 
     ctx.lineTo(boxX + r, boxY + boxH);
     ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - r);
@@ -175,9 +192,10 @@ export class SpeechBubbleManager {
 
   private renderCountdownPill(
     ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    cd: CountdownPayload
+    anchorX: number,
+    anchorY: number,
+    cd: CountdownPayload,
+    bounds?: ZoneBounds
   ): void {
     ctx.save();
     let timeStr = `${cd.minutesLeft}m`;
@@ -198,8 +216,15 @@ export class SpeechBubbleManager {
 
     const pillW = textW + 18;
     const pillH = 22;
-    const pillX = x - pillW / 2;
-    const pillY = y - pillH;
+    let pillX = anchorX - pillW / 2;
+    let pillY = anchorY - 10 - pillH;
+
+    if (bounds) {
+      pillX = Math.max(bounds.x + 8, Math.min(bounds.x + bounds.width - pillW - 8, pillX));
+      if (pillY < bounds.y + 4) {
+        pillY = Math.max(bounds.y + 4, pillY);
+      }
+    }
 
     ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
     ctx.shadowBlur = 8;
@@ -219,17 +244,27 @@ export class SpeechBubbleManager {
     ctx.fillStyle = '#f3f4f6';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(label, x, pillY + pillH / 2);
+    ctx.fillText(label, pillX + pillW / 2, pillY + pillH / 2);
 
     ctx.restore();
   }
 
-  public containsPoint(px: number, py: number, companionX: number, companionY: number): boolean {
+  public containsPoint(
+    px: number,
+    py: number,
+    anchorX: number,
+    anchorY: number,
+    bounds?: ZoneBounds
+  ): boolean {
     if (!this.active || this.active.alpha < 0.2) return false;
     const boxW = 160;
     const boxH = 46;
-    const boxX = companionX - boxW / 2;
-    const boxY = companionY - 70 - boxH;
+    let boxX = anchorX - boxW / 2;
+    let boxY = anchorY - 14 - boxH;
+    if (bounds) {
+      boxX = Math.max(bounds.x + 8, Math.min(bounds.x + bounds.width - boxW - 8, boxX));
+      if (boxY < bounds.y + 4) boxY = Math.max(bounds.y + 4, boxY);
+    }
     return px >= boxX && px <= boxX + boxW && py >= boxY && py <= boxY + boxH + 10;
   }
 }

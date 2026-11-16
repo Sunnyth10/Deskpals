@@ -347,6 +347,14 @@ export class WebHeroCompanion implements IEntity {
     return Math.abs(lx) <= HIT_HALF_WIDTH && ly >= HIT_TOP && ly <= HIT_BOTTOM;
   }
 
+  public getVisualAnchor(): { x: number; y: number } {
+    const head = this.toWorld(0, -23, true);
+    return {
+      x: head.x,
+      y: head.y - 12 * this.scale,
+    };
+  }
+
   public isGrabbed(): boolean {
     return this.state === 'GRABBED';
   }

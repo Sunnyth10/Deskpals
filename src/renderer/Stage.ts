@@ -211,9 +211,15 @@ export class Stage {
     if (this.particles.getParticleCount() > 0) this.particles.render(ctx);
 
     // Render speech bubbles anchored on the lead companion
-    const lead = this.entries[0]?.c;
-    if (lead) {
-      this.bubbleManager.render(ctx, lead.x, lead.y);
+    const leadEntry = this.entries[0];
+    if (leadEntry) {
+      const lead = leadEntry.c;
+      const companionSpecificScale = this.customScales[leadEntry.name] ?? 1.0;
+      const totalScale = this.globalScale * companionSpecificScale * currentEnlarge;
+      const anchor = lead.getVisualAnchor();
+      const visualX = lead.x + (anchor.x - lead.x) * totalScale;
+      const visualY = lead.y + (anchor.y - lead.y) * totalScale;
+      this.bubbleManager.render(ctx, visualX, visualY, this.bounds);
     }
   }
 

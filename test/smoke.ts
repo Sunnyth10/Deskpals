@@ -86,11 +86,32 @@ for (const name of NAMES) {
     stage.update(DT); stage.render(ctx);
   }
   check(c.isGrabbed(), 'grabbed while dragging');
+  const heldAnchor = c.getVisualAnchor();
+  check(Number.isFinite(heldAnchor.x) && Number.isFinite(heldAnchor.y), `${name} has valid visual anchor while held`);
+  check(heldAnchor.y < H - 10, `${name} visual anchor tracked upward while held`);
+
   c.pointerUp();
   let airborne = false;
-  for (let i = 0; i < 60; i++) { step(stage, 1); airborne ||= c.isAirborne(); }
+  let trackedInAir = false;
+  for (let i = 0; i < 60; i++) {
+    step(stage, 1);
+    if (c.isAirborne()) {
+      airborne = true;
+      const airAnchor = c.getVisualAnchor();
+      if (Number.isFinite(airAnchor.x) && Number.isFinite(airAnchor.y)) {
+        trackedInAir = true;
+      }
+    }
+  }
   check(airborne, 'airborne after throw');
+  check(trackedInAir, `${name} visual anchor tracks Y axis while airborne`);
   check(stage.targetFps() === 60 || !c.isAirborne(), 'fps tier is ACTIVE while airborne');
+
+  // Verify speech bubble and countdown rendering while active
+  stage.setCountdown({ taskName: 'Focus', minutesLeft: 5, formattedTime: '05:00' });
+  stage.showBubble({ id: 'test', text: 'Airborne bubble test', kind: 'alert' });
+  stage.render(ctx);
+  stage.setCountdown(null);
 
   step(stage, 60 * 8); // let it fly / land / settle
   check(finite(c), 'finite after throw');

@@ -18,7 +18,7 @@ const INTENSITY_COLORS = [
   '#c084fc', // 4: >60m
 ];
 
-function generateSparklineSvg(
+function generateSmoothSparklineSvg(
   points: DayMetricPoint[],
   key: 'pomodoros' | 'tasksDone' | 'focusMinutes' | 'distractions',
   strokeColor: string,
@@ -27,7 +27,7 @@ function generateSparklineSvg(
   const w = 240;
   const h = 50;
   const padX = 6;
-  const padY = 6;
+  const padY = 8;
 
   const values = points.map((p) => p[key]);
   const maxVal = Math.max(1, ...values);
@@ -36,16 +36,31 @@ function generateSparklineSvg(
   const coords = values.map((val, i) => {
     const x = padX + (i / (values.length - 1)) * (w - padX * 2);
     const y = h - padY - ((val - minVal) / (maxVal - minVal)) * (h - padY * 2);
-    return { x, y, val };
+    return { x, y, val, label: points[i]?.label ?? '' };
   });
 
-  const polylinePoints = coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
-  const polygonPoints = `${coords[0].x},${h} ${polylinePoints} ${coords[coords.length - 1].x},${h}`;
+  // Build smooth cubic bezier curve
+  let curvePath = `M ${coords[0].x.toFixed(1)} ${coords[0].y.toFixed(1)}`;
+  for (let i = 0; i < coords.length - 1; i++) {
+    const p0 = coords[Math.max(0, i - 1)];
+    const p1 = coords[i];
+    const p2 = coords[i + 1];
+    const p3 = coords[Math.min(coords.length - 1, i + 2)];
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+    curvePath += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+
+  const areaPath = `${curvePath} L ${coords[coords.length - 1].x.toFixed(1)} ${h} L ${coords[0].x.toFixed(1)} ${h} Z`;
 
   const circles = coords
     .map(
       (c) =>
-        `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3" fill="${strokeColor}"><title>${c.val}</title></circle>`
+        `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3" fill="${strokeColor}"><title>${c.label}: ${c.val}</title></circle>`
     )
     .join('');
 
@@ -53,15 +68,48 @@ function generateSparklineSvg(
     <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow: visible;">
       <defs>
         <linearGradient id="${fillGradientId}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.35"/>
+          <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.38"/>
           <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0.0"/>
         </linearGradient>
       </defs>
-      <polygon points="${polygonPoints}" fill="url(#${fillGradientId})" />
-      <polyline fill="none" stroke="${strokeColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${polylinePoints}" />
+      <path d="${areaPath}" fill="url(#${fillGradientId})" />
+      <path d="${curvePath}" fill="none" stroke="${strokeColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
       ${circles}
     </svg>
   `;
+}
+
+function formatVsYesterday(
+  todayVal: number,
+  yesterdayVal: number,
+  lowerIsBetter = false
+): { text: string; color: string; bg: string } {
+  const diff = todayVal - yesterdayVal;
+  if (diff === 0) {
+    return {
+      text: '0 vs yest',
+      color: 'var(--text-muted, #9ca3af)',
+      bg: 'rgba(156, 163, 175, 0.12)',
+    };
+  }
+
+  const isGood = lowerIsBetter ? diff < 0 : diff > 0;
+  const sign = diff > 0 ? '+' : '';
+  const text = `${sign}${diff} vs yest`;
+
+  if (isGood) {
+    return {
+      text,
+      color: '#4ade80',
+      bg: 'rgba(74, 222, 128, 0.14)',
+    };
+  } else {
+    return {
+      text,
+      color: '#f87171',
+      bg: 'rgba(248, 113, 113, 0.14)',
+    };
+  }
 }
 
 export async function renderStatsTab(container: HTMLElement, settings: Settings): Promise<() => void> {
@@ -72,6 +120,7 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
   const summary: SevenDaysSummary = data.sevenDays;
   const heatmap: HeatmapGrid = data.heatmap;
   const companionDays: number = data.companionDays;
+  const focusStreak: number = data.focusStreak ?? 0;
 
   container.innerHTML = '';
 
@@ -79,38 +128,52 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
   const cardsGrid = document.createElement('div');
   cardsGrid.className = 'grid-4';
 
+  const yesterdayPoint = summary.days.length >= 2 ? summary.days[summary.days.length - 2] : null;
+
   const metricsConfig = [
     {
+      icon: '🍅',
       title: t('stats_pomodoros', lang),
       today: summary.today.pomodoros,
+      yesterday: yesterdayPoint ? yesterdayPoint.pomodoros : 0,
       unit: '',
-      color: 'var(--accent-blue)',
+      color: '#38bdf8', // accent blue
       key: 'pomodoros' as const,
       gradId: 'grad-pomodoro',
+      lowerIsBetter: false,
     },
     {
+      icon: '✅',
       title: t('stats_tasks_done', lang),
       today: summary.today.tasksDone,
+      yesterday: yesterdayPoint ? yesterdayPoint.tasksDone : 0,
       unit: '',
-      color: 'var(--accent-green)',
+      color: '#4ade80', // accent green
       key: 'tasksDone' as const,
       gradId: 'grad-tasks',
+      lowerIsBetter: false,
     },
     {
+      icon: '⚡',
       title: t('stats_focus', lang),
       today: summary.today.focusMinutes,
-      unit: 'min',
-      color: 'var(--primary)',
+      yesterday: yesterdayPoint ? yesterdayPoint.focusMinutes : 0,
+      unit: 'm',
+      color: 'var(--primary, #a855f7)', // purple
       key: 'focusMinutes' as const,
       gradId: 'grad-focus',
+      lowerIsBetter: false,
     },
     {
+      icon: '⚠️',
       title: t('stats_distractions', lang),
       today: summary.today.distractions,
+      yesterday: yesterdayPoint ? yesterdayPoint.distractions : 0,
       unit: '',
-      color: 'var(--accent-red)',
+      color: 'var(--accent-red, #f87171)', // coral
       key: 'distractions' as const,
       gradId: 'grad-distract',
+      lowerIsBetter: true,
     },
   ];
 
@@ -118,11 +181,24 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
     const card = document.createElement('div');
     card.className = 'dash-card';
     card.style.padding = '14px';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.gap = '8px';
 
+    // Header: Icon + Title on left, "vs yesterday" chip on right
     const header = document.createElement('div');
     header.style.display = 'flex';
     header.style.justifyContent = 'space-between';
-    header.style.alignItems = 'baseline';
+    header.style.alignItems = 'center';
+
+    const titleWrap = document.createElement('div');
+    titleWrap.style.display = 'flex';
+    titleWrap.style.alignItems = 'center';
+    titleWrap.style.gap = '6px';
+
+    const iconEl = document.createElement('span');
+    iconEl.innerText = m.icon;
+    iconEl.style.fontSize = '14px';
 
     const titleEl = document.createElement('span');
     titleEl.innerText = m.title;
@@ -130,19 +206,37 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
     titleEl.style.color = 'var(--text-muted)';
     titleEl.style.fontWeight = '600';
 
-    const todayEl = document.createElement('span');
+    titleWrap.appendChild(iconEl);
+    titleWrap.appendChild(titleEl);
+
+    // vs yesterday chip
+    const vsYest = formatVsYesterday(m.today, m.yesterday, m.lowerIsBetter);
+    const chip = document.createElement('span');
+    chip.innerText = vsYest.text;
+    chip.style.fontSize = '10px';
+    chip.style.fontWeight = '700';
+    chip.style.padding = '2px 7px';
+    chip.style.borderRadius = '10px';
+    chip.style.color = vsYest.color;
+    chip.style.background = vsYest.bg;
+
+    header.appendChild(titleWrap);
+    header.appendChild(chip);
+    card.appendChild(header);
+
+    // Large Today count
+    const todayEl = document.createElement('div');
     todayEl.innerText = m.unit ? `${m.today} ${m.unit}` : `${m.today}`;
-    todayEl.style.fontSize = '22px';
+    todayEl.style.fontSize = '26px';
     todayEl.style.fontWeight = '800';
     todayEl.style.color = m.color;
-
-    header.appendChild(titleEl);
-    header.appendChild(todayEl);
-    card.appendChild(header);
+    todayEl.style.lineHeight = '1';
+    todayEl.style.marginTop = '2px';
+    card.appendChild(todayEl);
 
     // Sparkline
     const sparklineDiv = document.createElement('div');
-    sparklineDiv.innerHTML = generateSparklineSvg(summary.days, m.key, m.color, m.gradId);
+    sparklineDiv.innerHTML = generateSmoothSparklineSvg(summary.days, m.key, m.color, m.gradId);
     card.appendChild(sparklineDiv);
 
     // X-Axis range (e.g. 11/7 ... 11/13)
@@ -151,7 +245,6 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
     rangeEl.style.justifyContent = 'space-between';
     rangeEl.style.fontSize = '10px';
     rangeEl.style.color = 'var(--text-dim)';
-    rangeEl.style.marginTop = '4px';
     rangeEl.innerHTML = `<span>${summary.firstDateLabel}</span><span>${summary.lastDateLabel}</span>`;
     card.appendChild(rangeEl);
 
@@ -160,15 +253,21 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
 
   container.appendChild(cardsGrid);
 
-  // Companion Days Card
+  // Companion Days + Focus Streak Card
   const { card: daysCard, body: daysBody } = createCard(t('stats_companion_days', lang));
   daysBody.style.flexDirection = 'row';
   daysBody.style.alignItems = 'center';
-  daysBody.style.gap = '16px';
+  daysBody.style.justifyContent = 'space-between';
+  daysBody.style.padding = '12px 18px';
+
+  const daysLeft = document.createElement('div');
+  daysLeft.style.display = 'flex';
+  daysLeft.style.alignItems = 'center';
+  daysLeft.style.gap = '14px';
 
   const daysNumber = document.createElement('div');
   daysNumber.innerText = `${companionDays}`;
-  daysNumber.style.fontSize = '42px';
+  daysNumber.style.fontSize = '38px';
   daysNumber.style.fontWeight = '900';
   daysNumber.style.color = 'var(--primary)';
   daysNumber.style.lineHeight = '1';
@@ -179,8 +278,32 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
   daysLabel.style.color = 'var(--text)';
   daysLabel.style.fontWeight = '600';
 
-  daysBody.appendChild(daysNumber);
-  daysBody.appendChild(daysLabel);
+  daysLeft.appendChild(daysNumber);
+  daysLeft.appendChild(daysLabel);
+
+  // Streak badge on right
+  const streakBadge = document.createElement('div');
+  streakBadge.style.display = 'flex';
+  streakBadge.style.alignItems = 'center';
+  streakBadge.style.gap = '8px';
+  streakBadge.style.padding = '8px 14px';
+  streakBadge.style.borderRadius = '12px';
+  streakBadge.style.background = focusStreak > 0 ? 'rgba(249, 115, 22, 0.12)' : 'rgba(156, 163, 175, 0.08)';
+  streakBadge.style.border = focusStreak > 0 ? '1px solid rgba(249, 115, 22, 0.3)' : '1px solid rgba(156, 163, 175, 0.15)';
+
+  const streakIcon = document.createElement('span');
+  streakIcon.innerText = '🔥';
+  streakIcon.style.fontSize = '18px';
+
+  const streakText = document.createElement('div');
+  streakText.innerHTML = `<span style="font-weight: 800; font-size: 15px; color: ${focusStreak > 0 ? '#f97316' : 'var(--text-muted)'};">${focusStreak}</span> <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">day focus streak</span>`;
+
+  streakBadge.appendChild(streakIcon);
+  streakBadge.appendChild(streakText);
+
+  daysBody.appendChild(daysLeft);
+  daysBody.appendChild(streakBadge);
+  container.appendChild(daysCard);
   container.appendChild(daysCard);
 
   // Focus Heatmap Grid (GitHub style 52 weeks x 7 days)

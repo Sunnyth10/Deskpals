@@ -43,6 +43,7 @@ import {
   getLast7Days,
   buildHeatmapGrid,
   calculateCompanionDays,
+  calculateFocusStreak,
   parseStats,
   type DailyStats,
 } from '../core/stats';
@@ -651,7 +652,8 @@ ipcMain.handle(IPC_CHANNELS.STATS_GET, () => {
   const sevenDays = getLast7Days(statsCache, new Date());
   const heatmap = buildHeatmapGrid(statsCache, new Date());
   const companionDays = calculateCompanionDays(settings.firstLaunchDate, new Date());
-  return { sevenDays, heatmap, companionDays };
+  const focusStreak = calculateFocusStreak(statsCache, new Date());
+  return { sevenDays, heatmap, companionDays, focusStreak };
 });
 
 ipcMain.handle(IPC_CHANNELS.STATS_RECORD, (_e, payload: { type: 'pomodoros' | 'tasksDone' | 'focus' | 'distractions'; delta: number }) => {

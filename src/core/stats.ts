@@ -179,6 +179,37 @@ export function buildHeatmapGrid(
 }
 
 /**
+ * Calculates current consecutive days of focus activity (streak).
+ * If user hasn't recorded focus minutes today yet, checks backward from yesterday.
+ */
+export function calculateFocusStreak(
+  records: Record<string, DailyStats>,
+  referenceDate: Date = new Date()
+): number {
+  let streak = 0;
+  const d = new Date(referenceDate);
+  const todayKey = formatDateKey(d);
+  const todayMinutes = records[todayKey]?.focusMinutes ?? 0;
+
+  if (todayMinutes === 0) {
+    d.setDate(d.getDate() - 1);
+  }
+
+  while (true) {
+    const key = formatDateKey(d);
+    const mins = records[key]?.focusMinutes ?? 0;
+    if (mins > 0) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+/**
  * Calculates number of days companion has been with the user (minimum 1 day).
  */
 export function calculateCompanionDays(

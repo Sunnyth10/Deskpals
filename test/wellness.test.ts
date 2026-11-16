@@ -21,6 +21,7 @@ import {
   buildHeatmapGrid,
   intensityLevel,
   calculateCompanionDays,
+  calculateFocusStreak,
   parseStats,
   type DailyStats,
 } from '../src/core/stats';
@@ -224,6 +225,33 @@ console.log('=== TEST SUITE 3: CONFIG MIGRATION & BACKWARD COMPATIBILITY ===');
   // Corrupt or empty stats handling
   assert(Object.keys(parseStats('')).length === 0, 'Empty string returns empty stats object');
   assert(Object.keys(parseStats('invalid-json')).length === 0, 'Invalid JSON returns empty stats object without crashing');
+}
+
+// Test 9: calculateFocusStreak
+{
+  const refDate = new Date('2026-11-13T12:00:00');
+  const streakRecords: Record<string, DailyStats> = {
+    '2026-11-13': { date: '2026-11-13', pomodoros: 2, tasksDone: 1, focusMinutes: 50, distractions: 0 },
+    '2026-11-12': { date: '2026-11-12', pomodoros: 1, tasksDone: 3, focusMinutes: 25, distractions: 1 },
+    '2026-11-11': { date: '2026-11-11', pomodoros: 4, tasksDone: 2, focusMinutes: 100, distractions: 0 },
+    '2026-11-10': { date: '2026-11-10', pomodoros: 0, tasksDone: 0, focusMinutes: 0, distractions: 0 },
+  };
+
+  assert(calculateFocusStreak(streakRecords, refDate) === 3, 'Calculates 3-day active streak including today');
+
+  // If today is 0 mins but yesterday had focus, streak is preserved from yesterday
+  const zeroTodayRecords: Record<string, DailyStats> = {
+    ...streakRecords,
+    '2026-11-13': { date: '2026-11-13', pomodoros: 0, tasksDone: 0, focusMinutes: 0, distractions: 0 },
+  };
+  assert(calculateFocusStreak(zeroTodayRecords, refDate) === 2, 'Preserves previous 2-day streak before today records any focus');
+
+  // Broken streak
+  const brokenRecords: Record<string, DailyStats> = {
+    '2026-11-13': { date: '2026-11-13', pomodoros: 0, tasksDone: 0, focusMinutes: 0, distractions: 0 },
+    '2026-11-12': { date: '2026-11-12', pomodoros: 0, tasksDone: 0, focusMinutes: 0, distractions: 0 },
+  };
+  assert(calculateFocusStreak(brokenRecords, refDate) === 0, 'Reports 0 streak when neither today nor yesterday has focus');
 }
 
 console.log('=== TEST SUITE 4: I18N DICTIONARY ===');

@@ -9,7 +9,7 @@ export interface DashboardApi {
   getSettings(): Promise<Settings>;
   updateSettings(partial: Partial<Settings>): Promise<Settings>;
   onSettingsUpdated(cb: (settings: Settings) => void): () => void;
-  getStats(): Promise<{ sevenDays: SevenDaysSummary; heatmap: HeatmapGrid; companionDays: number }>;
+  getStats(): Promise<{ sevenDays: SevenDaysSummary; heatmap: HeatmapGrid; companionDays: number; focusStreak: number }>;
   recordStat(type: 'pomodoros' | 'tasksDone' | 'focus' | 'distractions', delta: number): Promise<void>;
   onStatsUpdated(cb: () => void): () => void;
   getReminders(): Promise<ReminderItem[]>;

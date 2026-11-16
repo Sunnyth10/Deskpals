@@ -21,6 +21,7 @@ import {
   buildHeatmapGrid,
   intensityLevel,
   calculateCompanionDays,
+  parseStats,
   type DailyStats,
 } from '../src/core/stats';
 import { t } from '../src/core/i18n';
@@ -103,17 +104,17 @@ console.log('=== TEST SUITE 2: STATS AGGREGATION & HEATMAP GRID ===');
 {
   const refDate = new Date('2026-11-13T12:00:00');
   const records: Record<string, DailyStats> = {
-    '2026-11-13': { date: '2026-11-13', breaks: 4, waters: 6, focusMinutes: 75, distractions: 2 },
-    '2026-11-12': { date: '2026-11-12', breaks: 3, waters: 5, focusMinutes: 45, distractions: 1 },
-    '2026-11-10': { date: '2026-11-10', breaks: 2, waters: 4, focusMinutes: 20, distractions: 5 },
+    '2026-11-13': { date: '2026-11-13', pomodoros: 4, tasksDone: 6, focusMinutes: 75, distractions: 2 },
+    '2026-11-12': { date: '2026-11-12', pomodoros: 3, tasksDone: 5, focusMinutes: 45, distractions: 1 },
+    '2026-11-10': { date: '2026-11-10', pomodoros: 2, tasksDone: 4, focusMinutes: 20, distractions: 5 },
   };
 
   const summary = getLast7Days(records, refDate);
   assert(summary.days.length === 7, 'Returns exactly 7 days');
   assert(summary.days[6].date === '2026-11-13', 'Last day is reference date');
-  assert(summary.days[6].breaks === 4 && summary.days[6].focusMinutes === 75, 'Populates today metric data');
+  assert(summary.days[6].pomodoros === 4 && summary.days[6].focusMinutes === 75, 'Populates today metric data');
   assert(summary.days[5].date === '2026-11-12', 'Previous day has matching data');
-  assert(summary.days[4].date === '2026-11-11' && summary.days[4].breaks === 0, 'Missing day defaults cleanly to 0');
+  assert(summary.days[4].date === '2026-11-11' && summary.days[4].pomodoros === 0, 'Missing day defaults cleanly to 0');
   assert(summary.today.focusMinutes === 75, 'Extracts today stats');
   assert(summary.firstDateLabel === '11/7', 'Calculates correct first date label');
   assert(summary.lastDateLabel === '11/13', 'Calculates correct last date label');
@@ -133,7 +134,7 @@ console.log('=== TEST SUITE 2: STATS AGGREGATION & HEATMAP GRID ===');
 {
   const refDate = new Date('2026-11-13T12:00:00');
   const records: Record<string, DailyStats> = {
-    '2026-11-13': { date: '2026-11-13', breaks: 1, waters: 1, focusMinutes: 80, distractions: 0 },
+    '2026-11-13': { date: '2026-11-13', pomodoros: 1, tasksDone: 1, focusMinutes: 80, distractions: 0 },
   };
 
   const grid = buildHeatmapGrid(records, refDate);
@@ -169,31 +170,60 @@ console.log('=== TEST SUITE 3: CONFIG MIGRATION & BACKWARD COMPATIBILITY ===');
   assert(empty.appearance.petSizePercent === 100, 'Defaults appearance petSizePercent to 100');
   assert(empty.appearance.lyricsMode === false, 'Defaults lyricsMode to false');
   assert(empty.motion.autoRun === true, 'Defaults autoRun to true');
-  assert(empty.health.breakEnabled === true, 'Defaults health breakEnabled to true');
   assert(empty.focus.enabled === false, 'Defaults focus enabled to false');
 
-  // 2. Legacy v0.1.0 format with "companions" array
-  const legacy = parseSettings('{"companions":["fox","ghost"],"displayId":2,"paused":true}');
+  // 2. Legacy v0.1.0 format with "companions" array and legacy "health" object
+  const legacy = parseSettings('{"companions":["fox","ghost"],"displayId":2,"paused":true,"health":{"breakEnabled":false}}');
   assert(legacy.companion === 'fox', 'Migrates legacy companions array first entry');
   assert(legacy.displayId === 2, 'Preserves displayId');
   assert(legacy.paused === true, 'Preserves paused');
   assert(legacy.companionScales.fox === 100, 'Populates companion scales');
+  assert(!('health' in legacy), 'Drops legacy health section safely');
 
   // 3. Clamping boundary values
   const clamped = parseSettings(JSON.stringify({
     appearance: { petSizePercent: 9999, bubbleDurationSeconds: 0 },
     companionScales: { cat: 20 },
-    health: { breakIntervalMinutes: 2 },
   }));
   assert(clamped.appearance.petSizePercent === 300, 'Clamps petSizePercent to max 300');
   assert(clamped.appearance.bubbleDurationSeconds === 2, 'Clamps bubbleDurationSeconds to min 2');
   assert(clamped.companionScales.cat === 50, 'Clamps companionScales to min 50');
-  assert(clamped.health.breakIntervalMinutes === 5, 'Clamps breakIntervalMinutes to min 5');
 
   // 4. Corrupt JSON throws proper error
   let threw = false;
   try { parseSettings('not-json'); } catch { threw = true; }
   assert(threw, 'Rejects invalid JSON syntax');
+}
+
+// Test 8: parseStats legacy migration
+{
+  const legacyJson = JSON.stringify({
+    '2026-11-13': {
+      date: '2026-11-13',
+      breaks: 5,
+      waters: 8,
+      focusMinutes: 75,
+      distractions: 2,
+    },
+    '2026-11-12': {
+      date: '2026-11-12',
+      focusMinutes: 30,
+    },
+  });
+
+  const parsed = parseStats(legacyJson);
+  assert(parsed['2026-11-13'] !== undefined, 'Parses legacy day key');
+  assert(parsed['2026-11-13'].pomodoros === 0, 'Initializes pomodoros to 0 for legacy entry');
+  assert(parsed['2026-11-13'].tasksDone === 0, 'Initializes tasksDone to 0 for legacy entry');
+  assert(parsed['2026-11-13'].focusMinutes === 75, 'Preserves focusMinutes from legacy file');
+  assert(parsed['2026-11-13'].distractions === 2, 'Preserves distractions from legacy file');
+  assert(!('breaks' in parsed['2026-11-13']), 'Drops legacy breaks field');
+  assert(!('waters' in parsed['2026-11-13']), 'Drops legacy waters field');
+  assert(parsed['2026-11-12'].distractions === 0, 'Defaults missing fields to 0');
+
+  // Corrupt or empty stats handling
+  assert(Object.keys(parseStats('')).length === 0, 'Empty string returns empty stats object');
+  assert(Object.keys(parseStats('invalid-json')).length === 0, 'Invalid JSON returns empty stats object without crashing');
 }
 
 console.log('=== TEST SUITE 4: I18N DICTIONARY ===');

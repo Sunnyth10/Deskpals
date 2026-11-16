@@ -154,9 +154,7 @@ export class SpeechBubbleManager {
 
     // Kind icon prefix
     let icon = '💬';
-    if (bubble.kind === 'break') icon = '☕';
-    else if (bubble.kind === 'water') icon = '💧';
-    else if (bubble.kind === 'alert') icon = '⏰';
+    if (bubble.kind === 'alert') icon = '⏰';
 
     // Draw main text
     ctx.fillStyle = '#ffffff';

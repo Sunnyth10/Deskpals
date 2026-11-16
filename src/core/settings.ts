@@ -21,15 +21,6 @@ export interface MotionSettings {
   idleMotionFrequencySeconds: number; // seconds between idle shifts (default 8)
 }
 
-export interface HealthSettings {
-  breakEnabled: boolean;
-  breakIntervalMinutes: number; // default 45
-  breakModeFullscreen: boolean; // default false
-  waterEnabled: boolean;
-  waterIntervalMinutes: number; // default 60
-  waterDailyGoal: number; // glasses, default 8
-}
-
 export interface FocusSettings {
   enabled: boolean;
   sessionDurationMinutes: number; // default 25
@@ -49,7 +40,6 @@ export interface Settings {
   appearance: AppearanceSettings;
   motion: MotionSettings;
   reminders: ReminderItem[];
-  health: HealthSettings;
   focus: FocusSettings;
 }
 
@@ -83,14 +73,6 @@ export const DEFAULT_SETTINGS: Settings = {
     idleMotionFrequencySeconds: 8,
   },
   reminders: [],
-  health: {
-    breakEnabled: true,
-    breakIntervalMinutes: 45,
-    breakModeFullscreen: false,
-    waterEnabled: true,
-    waterIntervalMinutes: 60,
-    waterDailyGoal: 8,
-  },
   focus: {
     enabled: false,
     sessionDurationMinutes: 25,
@@ -212,28 +194,6 @@ export function parseSettings(contents: string): Settings {
       }))
     : [];
 
-  // Health migration
-  const rawHealth = (raw.health && typeof raw.health === 'object'
-    ? raw.health
-    : {}) as Record<string, unknown>;
-  const health: HealthSettings = {
-    breakEnabled: rawHealth.breakEnabled !== false,
-    breakIntervalMinutes:
-      typeof rawHealth.breakIntervalMinutes === 'number' && Number.isFinite(rawHealth.breakIntervalMinutes)
-        ? Math.max(5, rawHealth.breakIntervalMinutes)
-        : DEFAULT_SETTINGS.health.breakIntervalMinutes,
-    breakModeFullscreen: rawHealth.breakModeFullscreen === true,
-    waterEnabled: rawHealth.waterEnabled !== false,
-    waterIntervalMinutes:
-      typeof rawHealth.waterIntervalMinutes === 'number' && Number.isFinite(rawHealth.waterIntervalMinutes)
-        ? Math.max(5, rawHealth.waterIntervalMinutes)
-        : DEFAULT_SETTINGS.health.waterIntervalMinutes,
-    waterDailyGoal:
-      typeof rawHealth.waterDailyGoal === 'number' && Number.isFinite(rawHealth.waterDailyGoal)
-        ? Math.max(1, rawHealth.waterDailyGoal)
-        : DEFAULT_SETTINGS.health.waterDailyGoal,
-  };
-
   // Focus migration
   const rawFocus = (raw.focus && typeof raw.focus === 'object'
     ? raw.focus
@@ -268,7 +228,6 @@ export function parseSettings(contents: string): Settings {
     appearance,
     motion,
     reminders,
-    health,
     focus,
   };
 }

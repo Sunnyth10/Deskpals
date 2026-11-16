@@ -15,8 +15,8 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
 
     // Stats
     stats_title: 'Wellness & Productivity Stats',
-    stats_breaks: 'Breaks',
-    stats_waters: 'Hydration',
+    stats_pomodoros: 'Pomodoros',
+    stats_tasks_done: 'Tasks done',
     stats_focus: 'Focus Minutes',
     stats_distractions: 'Distractions',
     stats_companion_days: 'Companion Days',
@@ -69,11 +69,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     settings_run_freq: 'Run Frequency',
     settings_run_dur: 'Run Duration',
     settings_idle_freq: 'Idle Motion Frequency',
-    settings_health: 'Health Nudges',
-    settings_break_interval: 'Break Interval',
-    settings_break_fullscreen: 'Fullscreen Break Mode',
-    settings_water_interval: 'Water Interval',
-    settings_water_goal: 'Daily Water Goal',
     settings_focus: 'Focus Mode',
     settings_focus_enable: 'Enable Focus Mode',
     settings_focus_duration: 'Session Duration',
@@ -83,12 +78,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     settings_stop_focus: 'Stop Focus',
     settings_focus_active: 'Focus Session in Progress',
 
-    // Health Nudges & Alerts
-    nudge_break_title: 'Time for a break!',
-    nudge_break_desc: 'Step away from your screen, rest your eyes, and take a deep breath.',
-    nudge_break_dismiss: 'Dismiss',
-    nudge_water_title: 'Hydration check!',
-    nudge_water_desc: 'Drink a glass of water to stay fresh and energized.',
+    // Alerts
     nudge_distraction: 'Distraction detected! Stay in the zone.',
   },
 
@@ -101,8 +91,8 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
 
     // Stats
     stats_title: 'Estadísticas de Bienestar y Enfoque',
-    stats_breaks: 'Pausas',
-    stats_waters: 'Hidratación',
+    stats_pomodoros: 'Pomodoros',
+    stats_tasks_done: 'Tareas completadas',
     stats_focus: 'Minutos de Enfoque',
     stats_distractions: 'Distracciones',
     stats_companion_days: 'Días Juntos',
@@ -155,11 +145,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     settings_run_freq: 'Frecuencia de Carrera',
     settings_run_dur: 'Duración de Carrera',
     settings_idle_freq: 'Frecuencia en Reposo',
-    settings_health: 'Alertas de Salud',
-    settings_break_interval: 'Intervalo de Pausa',
-    settings_break_fullscreen: 'Modo Pantalla Completa',
-    settings_water_interval: 'Intervalo de Agua',
-    settings_water_goal: 'Meta Diaria de Vasos',
     settings_focus: 'Modo Enfoque',
     settings_focus_enable: 'Activar Modo Enfoque',
     settings_focus_duration: 'Duración de Sesión',
@@ -169,12 +154,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     settings_stop_focus: 'Detener Enfoque',
     settings_focus_active: 'Sesión de Enfoque Activa',
 
-    // Health Nudges & Alerts
-    nudge_break_title: '¡Hora de una pausa!',
-    nudge_break_desc: 'Aléjate de la pantalla, descansa la vista y respira profundo.',
-    nudge_break_dismiss: 'Cerrar',
-    nudge_water_title: '¡Hora de tomar agua!',
-    nudge_water_desc: 'Bebe un vaso de agua para mantenerte fresco y con energía.',
+    // Alerts
     nudge_distraction: '¡Distracción detectada! Vuelve a concentrarte.',
   },
 };

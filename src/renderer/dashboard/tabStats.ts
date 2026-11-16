@@ -20,7 +20,7 @@ const INTENSITY_COLORS = [
 
 function generateSparklineSvg(
   points: DayMetricPoint[],
-  key: 'breaks' | 'waters' | 'focusMinutes' | 'distractions',
+  key: 'pomodoros' | 'tasksDone' | 'focusMinutes' | 'distractions',
   strokeColor: string,
   fillGradientId: string
 ): string {
@@ -81,20 +81,20 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
 
   const metricsConfig = [
     {
-      title: t('stats_breaks', lang),
-      today: summary.today.breaks,
+      title: t('stats_pomodoros', lang),
+      today: summary.today.pomodoros,
       unit: '',
       color: 'var(--accent-blue)',
-      key: 'breaks' as const,
-      gradId: 'grad-breaks',
+      key: 'pomodoros' as const,
+      gradId: 'grad-pomodoro',
     },
     {
-      title: t('stats_waters', lang),
-      today: summary.today.waters,
+      title: t('stats_tasks_done', lang),
+      today: summary.today.tasksDone,
       unit: '',
       color: 'var(--accent-green)',
-      key: 'waters' as const,
-      gradId: 'grad-waters',
+      key: 'tasksDone' as const,
+      gradId: 'grad-tasks',
     },
     {
       title: t('stats_focus', lang),

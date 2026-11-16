@@ -4,7 +4,7 @@
  * Owns:
  * - Transparent, click-through overlay window (companions)
  * - Dashboard window (Wellness + Stats + Pet + Reminders + Settings)
- * - Reminder Scheduler & Health Nudges (breaks, water)
+ * - Reminder Scheduler
  * - Focus Mode & Distraction Monitor
  * - Daily Stats Store & Settings Persistence
  */
@@ -43,9 +43,10 @@ import {
   getLast7Days,
   buildHeatmapGrid,
   calculateCompanionDays,
+  parseStats,
   type DailyStats,
 } from '../core/stats';
-import { IPC_CHANNELS, type FocusStatus, type SpeechBubbleMessage } from '../shared/ipc-channels';
+import { IPC_CHANNELS, type FocusStatus, type SpeechBubbleMessage, type CountdownPayload } from '../shared/ipc-channels';
 import { t } from '../core/i18n';
 
 type LivingEvent = 'save' | 'run' | 'buildSuccess' | 'buildError';
@@ -136,7 +137,7 @@ function loadStats(): void {
   try {
     const file = statsFile();
     if (fs.existsSync(file)) {
-      statsCache = JSON.parse(fs.readFileSync(file, 'utf8'));
+      statsCache = parseStats(fs.readFileSync(file, 'utf8'));
     } else {
       statsCache = {};
     }
@@ -163,13 +164,13 @@ function saveStats(): void {
   }
 }
 
-function recordStat(type: 'breaks' | 'waters' | 'focusMinutes' | 'distractions', delta: number): void {
+function recordStat(type: 'pomodoros' | 'tasksDone' | 'focusMinutes' | 'distractions', delta: number): void {
   const todayKey = formatDateKey(new Date());
   if (!statsCache[todayKey]) {
     statsCache[todayKey] = {
       date: todayKey,
-      breaks: 0,
-      waters: 0,
+      pomodoros: 0,
+      tasksDone: 0,
       focusMinutes: 0,
       distractions: 0,
     };
@@ -186,7 +187,6 @@ function recordStat(type: 'breaks' | 'waters' | 'focusMinutes' | 'distractions',
 
 let win: BrowserWindow | null = null;
 let dashboardWin: BrowserWindow | null = null;
-let breakOverlayWin: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let foregroundAppBundleId: string | null = null;
 let companionGrabbed = false;
@@ -371,55 +371,6 @@ function openDashboard(tab?: DashboardTab): void {
   });
 }
 
-function openFullscreenBreak(): void {
-  if (breakOverlayWin && !breakOverlayWin.isDestroyed()) return;
-
-  const display = targetDisplay();
-  breakOverlayWin = new BrowserWindow({
-    x: display.bounds.x,
-    y: display.bounds.y,
-    width: display.bounds.width,
-    height: display.bounds.height,
-    transparent: true,
-    frame: false,
-    alwaysOnTop: true,
-    fullscreen: true,
-    skipTaskbar: true,
-    backgroundColor: '#121316ee',
-    webPreferences: { contextIsolation: true },
-  });
-
-  const lang = settings.language;
-  const html = `
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body { margin:0; height:100vh; display:flex; flex-direction:column; align-items:center;
-          justify-content:center; color:#f3f4f6; font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-          cursor:pointer; user-select:none; }
-        h1 { font-size:32px; font-weight:800; color:#a855f7; margin-bottom:8px; }
-        p { font-size:16px; color:#9ca3af; margin-bottom:24px; max-width:440px; text-align:center; line-height:1.5; }
-        .dismiss-badge { font-size:12px; background:rgba(255,255,255,0.1); padding:6px 14px; border-radius:20px; color:#cbd5e1; }
-      </style>
-    </head>
-    <body>
-      <div style="font-size: 54px; margin-bottom: 12px;">🌿</div>
-      <h1>${t('nudge_break_title', lang)}</h1>
-      <p>${t('nudge_break_desc', lang)}</p>
-      <div class="dismiss-badge">Click anywhere or press ESC to dismiss</div>
-      <script>
-        window.addEventListener('click', () => window.close());
-        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
-      </script>
-    </body>
-    </html>
-  `;
-
-  breakOverlayWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-}
-
 /* ---------------------------------- menu --------------------------------- */
 
 function buildMenu(): Menu {
@@ -533,9 +484,6 @@ function refreshMenu(): void {
 const firedRemindersToday = new Set<string>();
 let lastMidnightDate = formatDateKey(new Date());
 
-let breakTimerMinutes = 0;
-let waterTimerMinutes = 0;
-
 // Focus session state
 let focusActive = false;
 let focusSessionEndTime = 0;
@@ -569,7 +517,7 @@ function checkSchedulerTicker(): void {
   }
 
   // 1. Reminders evaluation
-  let activeCountdownPayload: { taskName: string; minutesLeft: number; formattedTime: string } | null = null;
+  let activeCountdownPayload: CountdownPayload | null = null;
 
   for (const reminder of settings.reminders) {
     if (!reminder.enabled) continue;
@@ -624,48 +572,8 @@ function checkSchedulerTicker(): void {
   sendOverlay(IPC_CHANNELS.OVERLAY_COUNTDOWN, activeCountdownPayload);
 }
 
-// Every minute tick: health nudges & focus check
+// Every minute tick: focus check
 function minuteTicker(): void {
-  const lang = settings.language;
-
-  // Break nudges
-  if (settings.health.breakEnabled) {
-    breakTimerMinutes++;
-    if (breakTimerMinutes >= settings.health.breakIntervalMinutes) {
-      breakTimerMinutes = 0;
-      recordStat('breaks', 1);
-
-      showCompanionBubble({
-        id: `break-${Date.now()}`,
-        text: t('nudge_break_title', lang),
-        kind: 'break',
-        durationSeconds: settings.appearance.bubbleDurationSeconds + 2,
-        subtext: t('nudge_break_desc', lang),
-      });
-
-      if (settings.health.breakModeFullscreen) {
-        openFullscreenBreak();
-      }
-    }
-  }
-
-  // Water nudges
-  if (settings.health.waterEnabled) {
-    waterTimerMinutes++;
-    if (waterTimerMinutes >= settings.health.waterIntervalMinutes) {
-      waterTimerMinutes = 0;
-      recordStat('waters', 1);
-
-      showCompanionBubble({
-        id: `water-${Date.now()}`,
-        text: t('nudge_water_title', lang),
-        kind: 'water',
-        durationSeconds: settings.appearance.bubbleDurationSeconds + 2,
-        subtext: t('nudge_water_desc', lang),
-      });
-    }
-  }
-
   // Focus mode countdown
   if (focusActive) {
     const now = Date.now();
@@ -746,7 +654,7 @@ ipcMain.handle(IPC_CHANNELS.STATS_GET, () => {
   return { sevenDays, heatmap, companionDays };
 });
 
-ipcMain.handle(IPC_CHANNELS.STATS_RECORD, (_e, payload: { type: 'breaks' | 'waters' | 'focus' | 'distractions'; delta: number }) => {
+ipcMain.handle(IPC_CHANNELS.STATS_RECORD, (_e, payload: { type: 'pomodoros' | 'tasksDone' | 'focus' | 'distractions'; delta: number }) => {
   const mapKey = payload.type === 'focus' ? 'focusMinutes' : payload.type;
   recordStat(mapKey, payload.delta);
 });

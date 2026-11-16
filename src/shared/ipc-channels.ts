@@ -58,7 +58,7 @@ export interface FocusStatus {
 export interface SpeechBubbleMessage {
   id: string;
   text: string;
-  kind?: 'info' | 'alert' | 'countdown' | 'break' | 'water';
+  kind?: 'info' | 'alert' | 'countdown';
   durationSeconds?: number;
   subtext?: string;
 }

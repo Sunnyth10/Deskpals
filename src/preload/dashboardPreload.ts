@@ -10,12 +10,12 @@ export interface DashboardApi {
   updateSettings(partial: Partial<Settings>): Promise<Settings>;
   onSettingsUpdated(cb: (settings: Settings) => void): () => void;
   getStats(): Promise<{ sevenDays: SevenDaysSummary; heatmap: HeatmapGrid; companionDays: number }>;
-  recordStat(type: 'breaks' | 'waters' | 'focus' | 'distractions', delta: number): Promise<void>;
+  recordStat(type: 'pomodoros' | 'tasksDone' | 'focus' | 'distractions', delta: number): Promise<void>;
   onStatsUpdated(cb: () => void): () => void;
   getReminders(): Promise<ReminderItem[]>;
   saveReminder(reminder: ReminderItem): Promise<ReminderItem[]>;
   deleteReminder(id: string): Promise<ReminderItem[]>;
-  triggerTestAlert(text: string, kind?: 'info' | 'alert' | 'countdown' | 'break' | 'water'): Promise<void>;
+  triggerTestAlert(text: string, kind?: 'info' | 'alert' | 'countdown'): Promise<void>;
   startFocus(): Promise<FocusStatus>;
   stopFocus(): Promise<FocusStatus>;
   getFocusStatus(): Promise<FocusStatus>;

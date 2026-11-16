@@ -3,7 +3,7 @@ import type { ReminderItem } from '../../core/reminders';
 import { formatLiveNext } from '../../core/reminders';
 import type { Settings } from '../../core/settings';
 import { t } from '../../core/i18n';
-import { createCard, createSlider, createStepper, createToggle } from './components';
+import { createCard, createSlider, createToggle } from './components';
 
 declare global {
   interface Window {

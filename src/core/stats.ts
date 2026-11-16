@@ -4,8 +4,8 @@
 
 export interface DailyStats {
   date: string; // 'YYYY-MM-DD'
-  breaks: number;
-  waters: number;
+  pomodoros: number;
+  tasksDone: number;
   focusMinutes: number;
   distractions: number;
 }
@@ -13,8 +13,8 @@ export interface DailyStats {
 export interface DayMetricPoint {
   date: string; // 'YYYY-MM-DD'
   label: string; // 'MM/DD'
-  breaks: number;
-  waters: number;
+  pomodoros: number;
+  tasksDone: number;
   focusMinutes: number;
   distractions: number;
 }
@@ -87,8 +87,8 @@ export function getLast7Days(
     const key = formatDateKey(d);
     const rec = records[key] ?? {
       date: key,
-      breaks: 0,
-      waters: 0,
+      pomodoros: 0,
+      tasksDone: 0,
       focusMinutes: 0,
       distractions: 0,
     };
@@ -96,8 +96,8 @@ export function getLast7Days(
     days.push({
       date: key,
       label: formatShortDate(d),
-      breaks: rec.breaks,
-      waters: rec.waters,
+      pomodoros: rec.pomodoros,
+      tasksDone: rec.tasksDone,
       focusMinutes: rec.focusMinutes,
       distractions: rec.distractions,
     });
@@ -106,8 +106,8 @@ export function getLast7Days(
   const todayKey = formatDateKey(referenceDate);
   const today = records[todayKey] ?? {
     date: todayKey,
-    breaks: 0,
-    waters: 0,
+    pomodoros: 0,
+    tasksDone: 0,
     focusMinutes: 0,
     distractions: 0,
   };
@@ -195,4 +195,52 @@ export function calculateCompanionDays(
 
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
   return Math.max(1, days);
+}
+
+/**
+ * Parses stats.json contents and safely migrates legacy records.
+ * Legacy records containing breaks/waters are preserved without crashing,
+ * dropping the legacy fields and initializing pomodoros / tasksDone.
+ */
+export function parseStats(jsonString: string): Record<string, DailyStats> {
+  const result: Record<string, DailyStats> = {};
+  if (!jsonString || typeof jsonString !== 'string') return result;
+
+  try {
+    const raw = JSON.parse(jsonString);
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return result;
+    }
+
+    for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || !value || typeof value !== 'object') {
+        continue;
+      }
+      const entry = value as Record<string, unknown>;
+      result[key] = {
+        date: typeof entry.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(entry.date) ? entry.date : key,
+        pomodoros:
+          typeof entry.pomodoros === 'number' && Number.isFinite(entry.pomodoros)
+            ? Math.max(0, Math.floor(entry.pomodoros))
+            : 0,
+        tasksDone:
+          typeof entry.tasksDone === 'number' && Number.isFinite(entry.tasksDone)
+            ? Math.max(0, Math.floor(entry.tasksDone))
+            : 0,
+        focusMinutes:
+          typeof entry.focusMinutes === 'number' && Number.isFinite(entry.focusMinutes)
+            ? Math.max(0, Math.floor(entry.focusMinutes))
+            : 0,
+        distractions:
+          typeof entry.distractions === 'number' && Number.isFinite(entry.distractions)
+            ? Math.max(0, Math.floor(entry.distractions))
+            : 0,
+      };
+    }
+  } catch {
+    // Return empty record on JSON syntax errors without crashing
+    return {};
+  }
+
+  return result;
 }

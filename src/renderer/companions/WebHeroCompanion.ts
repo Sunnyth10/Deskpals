@@ -1200,7 +1200,7 @@ export class WebHeroCompanion implements IEntity {
     this.setState('SENSE', 'tingle');
   }
 
-  private runSense(step: number): void {
+  private runSense(_step: number): void {
     const s = this.scale;
     const w = this.web;
     const o = this.orb;

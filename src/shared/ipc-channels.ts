@@ -5,6 +5,7 @@
 export type { Settings } from '../core/settings';
 export type { DailyStats, SevenDaysSummary, HeatmapGrid } from '../core/stats';
 export type { ReminderItem, ScheduledAlert } from '../core/reminders';
+export type { PomodoroStatus, PomodoroPhase } from '../core/pomodoro';
 
 export const IPC_CHANNELS = {
   // Settings
@@ -28,6 +29,14 @@ export const IPC_CHANNELS = {
   FOCUS_STOP: 'focus:stop',
   FOCUS_STATUS: 'focus:status',
   FOCUS_STATE_CHANGED: 'focus:state-changed',
+
+  // Pomodoro
+  POMODORO_GET_STATUS: 'pomodoro:status',
+  POMODORO_START: 'pomodoro:start',
+  POMODORO_PAUSE: 'pomodoro:pause',
+  POMODORO_SKIP: 'pomodoro:skip',
+  POMODORO_RESET: 'pomodoro:reset',
+  POMODORO_STATUS_CHANGED: 'pomodoro:status-changed',
 
   // Overlay interactions
   OVERLAY_READY: 'overlay:ready',

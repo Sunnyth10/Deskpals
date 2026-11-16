@@ -2,6 +2,7 @@ import type { DashboardApi } from '../../preload/dashboardPreload';
 import type { Settings } from '../../core/settings';
 import { t } from '../../core/i18n';
 import type { DayMetricPoint, HeatmapGrid, SevenDaysSummary } from '../../core/stats';
+import type { PomodoroStatus } from '../../shared/ipc-channels';
 import { createCard } from './components';
 
 declare global {
@@ -253,6 +254,131 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
 
   container.appendChild(cardsGrid);
 
+  // Pomodoro Timer Control Section
+  const { card: pomoCard, body: pomoBody } = createCard('🍅 ' + t('pomo_title', lang));
+  pomoBody.style.display = 'flex';
+  pomoBody.style.flexDirection = 'row';
+  pomoBody.style.alignItems = 'center';
+  pomoBody.style.justifyContent = 'space-between';
+  pomoBody.style.flexWrap = 'wrap';
+  pomoBody.style.gap = '16px';
+  pomoBody.style.padding = '14px 20px';
+
+  // Left: Phase and Round badge
+  const pomoInfo = document.createElement('div');
+  pomoInfo.style.display = 'flex';
+  pomoInfo.style.flexDirection = 'column';
+  pomoInfo.style.gap = '4px';
+
+  const pomoPhaseBadge = document.createElement('div');
+  pomoPhaseBadge.style.fontSize = '13px';
+  pomoPhaseBadge.style.fontWeight = '700';
+  pomoPhaseBadge.style.letterSpacing = '0.5px';
+  pomoPhaseBadge.style.textTransform = 'uppercase';
+
+  const pomoRoundInfo = document.createElement('div');
+  pomoRoundInfo.style.fontSize = '12px';
+  pomoRoundInfo.style.color = 'var(--text-muted)';
+
+  pomoInfo.appendChild(pomoPhaseBadge);
+  pomoInfo.appendChild(pomoRoundInfo);
+
+  // Center: Live MM:SS Countdown
+  const pomoTimerEl = document.createElement('div');
+  pomoTimerEl.style.fontSize = '38px';
+  pomoTimerEl.style.fontWeight = '800';
+  pomoTimerEl.style.fontVariantNumeric = 'tabular-nums';
+  pomoTimerEl.style.letterSpacing = '-1px';
+  pomoTimerEl.style.lineHeight = '1';
+
+  // Right: Controls (Start/Pause, Skip, Reset)
+  const pomoButtons = document.createElement('div');
+  pomoButtons.style.display = 'flex';
+  pomoButtons.style.alignItems = 'center';
+  pomoButtons.style.gap = '8px';
+
+  const startPauseBtn = document.createElement('button');
+  startPauseBtn.className = 'btn-primary';
+  startPauseBtn.style.minWidth = '80px';
+
+  const skipBtn = document.createElement('button');
+  skipBtn.className = 'btn-secondary';
+  skipBtn.innerText = t('pomo_skip', lang);
+
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'btn-secondary';
+  resetBtn.innerText = t('pomo_reset', lang);
+
+  pomoButtons.appendChild(startPauseBtn);
+  pomoButtons.appendChild(skipBtn);
+  pomoButtons.appendChild(resetBtn);
+
+  pomoBody.appendChild(pomoInfo);
+  pomoBody.appendChild(pomoTimerEl);
+  pomoBody.appendChild(pomoButtons);
+
+  let currentPomoStatus: PomodoroStatus | null = null;
+
+  function updatePomoUI(status: PomodoroStatus): void {
+    currentPomoStatus = status;
+    let phaseText = t('pomo_phase_idle', lang);
+    let phaseColor = 'var(--text-muted)';
+
+    if (status.phase === 'work') {
+      phaseText = '🍅 ' + t('pomo_phase_work', lang);
+      phaseColor = '#38bdf8';
+    } else if (status.phase === 'shortBreak') {
+      phaseText = '☕ ' + t('pomo_phase_short', lang);
+      phaseColor = '#4ade80';
+    } else if (status.phase === 'longBreak') {
+      phaseText = '🌴 ' + t('pomo_phase_long', lang);
+      phaseColor = '#a855f7';
+    }
+
+    pomoPhaseBadge.innerText = phaseText;
+    pomoPhaseBadge.style.color = phaseColor;
+    pomoTimerEl.style.color = phaseColor;
+
+    pomoRoundInfo.innerText = `${t('pomo_round', lang)} ${status.round} / ${status.totalRounds}`;
+    pomoTimerEl.innerText = status.formattedTime;
+
+    if (status.phase === 'idle' || status.paused) {
+      startPauseBtn.innerText = t('pomo_start', lang);
+      startPauseBtn.className = 'btn-primary';
+    } else {
+      startPauseBtn.innerText = t('pomo_pause', lang);
+      startPauseBtn.className = 'btn-secondary';
+    }
+
+    skipBtn.disabled = status.phase === 'idle';
+    resetBtn.disabled = status.phase === 'idle' && status.secondsRemaining === status.totalSeconds;
+  }
+
+  startPauseBtn.addEventListener('click', async () => {
+    if (!currentPomoStatus || currentPomoStatus.phase === 'idle' || currentPomoStatus.paused) {
+      const s = await window.deskpals.startPomodoro();
+      updatePomoUI(s);
+    } else {
+      const s = await window.deskpals.pausePomodoro();
+      updatePomoUI(s);
+    }
+  });
+
+  skipBtn.addEventListener('click', async () => {
+    const s = await window.deskpals.skipPomodoro();
+    updatePomoUI(s);
+  });
+
+  resetBtn.addEventListener('click', async () => {
+    const s = await window.deskpals.resetPomodoro();
+    updatePomoUI(s);
+  });
+
+  window.deskpals.getPomodoroStatus().then(updatePomoUI);
+  const unbindPomo = window.deskpals.onPomodoroStatusChanged(updatePomoUI);
+
+  container.appendChild(pomoCard);
+
   // Companion Days + Focus Streak Card
   const { card: daysCard, body: daysBody } = createCard(t('stats_companion_days', lang));
   daysBody.style.flexDirection = 'row';
@@ -303,7 +429,6 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
 
   daysBody.appendChild(daysLeft);
   daysBody.appendChild(streakBadge);
-  container.appendChild(daysCard);
   container.appendChild(daysCard);
 
   // Focus Heatmap Grid (GitHub style 52 weeks x 7 days)
@@ -375,12 +500,15 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
   container.appendChild(heatCard);
 
   // Subscribe to live stats updates
-  const unsubscribe = window.deskpals.onStatsUpdated(() => {
+  const unsubscribeStats = window.deskpals.onStatsUpdated(() => {
     // Only re-render if the container is still attached and document is visible
     if (!document.hidden && container.isConnected) {
       renderStatsTab(container, settings);
     }
   });
 
-  return unsubscribe;
+  return () => {
+    unsubscribeStats();
+    unbindPomo();
+  };
 }

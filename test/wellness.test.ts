@@ -26,6 +26,16 @@ import {
   type DailyStats,
 } from '../src/core/stats';
 import { t } from '../src/core/i18n';
+import {
+  createInitialPomodoroState,
+  startPomodoro,
+  pausePomodoro,
+  skipPomodoro,
+  resetPomodoro,
+  tickPomodoro,
+  getPomodoroSecondsRemaining,
+  formatTimeMMSS,
+} from '../src/core/pomodoro';
 
 let failures = 0;
 function assert(condition: boolean, message: string): void {
@@ -254,7 +264,115 @@ console.log('=== TEST SUITE 3: CONFIG MIGRATION & BACKWARD COMPATIBILITY ===');
   assert(calculateFocusStreak(brokenRecords, refDate) === 0, 'Reports 0 streak when neither today nor yesterday has focus');
 }
 
-console.log('=== TEST SUITE 4: I18N DICTIONARY ===');
+console.log('=== TEST SUITE 4: POMODORO STATE MACHINE ===');
+{
+  const t0 = 1000000;
+  const settings = {
+    workMinutes: 25,
+    shortBreakMinutes: 5,
+    longBreakMinutes: 15,
+    roundsBeforeLongBreak: 4,
+    autoStartNext: false,
+  };
+
+  // 1. Initial State
+  let state = createInitialPomodoroState(settings);
+  assert(state.phase === 'idle', 'Starts in idle phase');
+  assert(state.round === 1, 'Initial round is 1');
+  assert(getPomodoroSecondsRemaining(state, t0) === 25 * 60, 'Initial remaining seconds is 25 minutes');
+  assert(formatTimeMMSS(getPomodoroSecondsRemaining(state, t0)) === '25:00', 'Formats 25:00 cleanly');
+
+  // 2. Start Work
+  state = startPomodoro(state, settings, t0);
+  assert(state.phase === 'work' && !state.paused, 'Transitions from idle to active work');
+  assert(state.targetTimestamp === t0 + 25 * 60 * 1000, 'Sets target timestamp 25 minutes into future');
+
+  // 3. Pause & Resume
+  const tPause = t0 + 5 * 60 * 1000; // 5 mins in
+  state = pausePomodoro(state, tPause);
+  assert(state.paused === true, 'Sets paused flag');
+  assert(state.remainingSeconds === 20 * 60, 'Preserves 20 minutes remaining when paused');
+
+  const tResume = tPause + 10 * 60 * 1000; // paused for 10 mins
+  state = startPomodoro(state, settings, tResume);
+  assert(state.paused === false, 'Resumes timer');
+  assert(state.targetTimestamp === tResume + 20 * 60 * 1000, 'Recomputes target timestamp from resume time');
+
+  // 4. Skip doesn't count towards completion
+  const preSkip = state;
+  state = skipPomodoro(preSkip, settings, tResume);
+  assert(state.phase === 'shortBreak', 'Skipping work transitions to shortBreak');
+  assert(state.paused === true, 'AutoStart=false pauses after skip');
+  assert(state.round === 1, 'Round is preserved as 1 on work skip');
+
+  // 5. Complete full cycle: Work 1 -> Short 1 -> Work 2 -> Short 2 -> Work 3 -> Short 3 -> Work 4 -> Long Break
+  let cycleState = createInitialPomodoroState(settings);
+  let curTime = t0;
+
+  // Round 1 Work
+  cycleState = startPomodoro(cycleState, settings, curTime);
+  let tick = tickPomodoro(cycleState, settings, curTime + 24 * 60 * 1000);
+  assert(tick.completedPhase === null, 'No completion before target timestamp');
+
+  // Simulated sleep gap: clock jumps past end time
+  curTime += 25 * 60 * 1000;
+  tick = tickPomodoro(cycleState, settings, curTime);
+  assert(tick.completedPhase === 'work', 'Detects work phase completion');
+  assert(tick.completedMinutes === 25, 'Returns 25 completed minutes');
+  cycleState = tick.newState;
+  assert(cycleState.phase === 'shortBreak', 'Transitions to shortBreak after work round 1');
+  assert(cycleState.round === 1, 'Current round stays 1 during short break');
+
+  // Round 1 Short Break
+  cycleState = startPomodoro(cycleState, settings, curTime);
+  curTime += 5 * 60 * 1000;
+  tick = tickPomodoro(cycleState, settings, curTime);
+  assert(tick.completedPhase === 'shortBreak', 'Detects shortBreak completion');
+  cycleState = tick.newState;
+  assert(cycleState.phase === 'work', 'Transitions to work phase for round 2');
+  assert(cycleState.round === 2, 'Increments to round 2');
+
+  // Fast forward round 2 & 3
+  // Round 2
+  cycleState = startPomodoro(cycleState, settings, curTime);
+  curTime += 25 * 60 * 1000;
+  cycleState = tickPomodoro(cycleState, settings, curTime).newState;
+  cycleState = startPomodoro(cycleState, settings, curTime);
+  curTime += 5 * 60 * 1000;
+  cycleState = tickPomodoro(cycleState, settings, curTime).newState;
+  assert(cycleState.round === 3, 'Advances to round 3');
+
+  // Round 3
+  cycleState = startPomodoro(cycleState, settings, curTime);
+  curTime += 25 * 60 * 1000;
+  cycleState = tickPomodoro(cycleState, settings, curTime).newState;
+  cycleState = startPomodoro(cycleState, settings, curTime);
+  curTime += 5 * 60 * 1000;
+  cycleState = tickPomodoro(cycleState, settings, curTime).newState;
+  assert(cycleState.round === 4, 'Advances to round 4');
+
+  // Round 4 (Trigger long break!)
+  cycleState = startPomodoro(cycleState, settings, curTime);
+  curTime += 25 * 60 * 1000;
+  tick = tickPomodoro(cycleState, settings, curTime);
+  assert(tick.completedPhase === 'work', 'Round 4 work completes');
+  cycleState = tick.newState;
+  assert(cycleState.phase === 'longBreak', 'Transitions to longBreak after 4th work round');
+
+  // Complete long break -> cycles back to round 1
+  cycleState = startPomodoro(cycleState, settings, curTime);
+  curTime += 15 * 60 * 1000;
+  tick = tickPomodoro(cycleState, settings, curTime);
+  assert(tick.completedPhase === 'longBreak', 'Long break completes');
+  cycleState = tick.newState;
+  assert(cycleState.phase === 'work' && cycleState.round === 1, 'Cycles back to work round 1');
+
+  // Reset
+  cycleState = resetPomodoro(settings);
+  assert(cycleState.phase === 'idle' && cycleState.round === 1, 'Reset returns to idle round 1');
+}
+
+console.log('=== TEST SUITE 5: I18N DICTIONARY ===');
 {
   assert(t('nav_stats', 'en') === 'Stats', 'English translation works');
   assert(t('nav_stats', 'es') === 'Estadísticas', 'Spanish translation works');

@@ -252,6 +252,127 @@ export function renderSettingsTab(
 
   container.appendChild(motionCard);
 
+  // Pomodoro Settings Card
+  const { card: pomoCard, body: pomoBody } = createCard('🍅 ' + t('settings_pomodoro', lang));
+
+  // Work Duration
+  const pomoWorkRow = document.createElement('div');
+  pomoWorkRow.className = 'setting-row';
+  pomoWorkRow.innerHTML = `
+    <div class="setting-info">
+      <div class="setting-label">${t('settings_pomo_work', lang)}</div>
+      <div class="setting-desc">Standard length of each focused work interval.</div>
+    </div>
+  `;
+  const pomoWorkStepper = createStepper({
+    value: settings.pomodoro.workMinutes,
+    min: 5,
+    max: 120,
+    step: 5,
+    unit: 'm',
+    onChange: async (val) => {
+      const pomodoro = { ...settings.pomodoro, workMinutes: val };
+      const updated = await window.deskpals.updateSettings({ pomodoro });
+      onSettingsChange(updated);
+    },
+  });
+  pomoWorkRow.appendChild(pomoWorkStepper);
+  pomoBody.appendChild(pomoWorkRow);
+
+  // Short Break
+  const pomoShortRow = document.createElement('div');
+  pomoShortRow.className = 'setting-row';
+  pomoShortRow.innerHTML = `
+    <div class="setting-info">
+      <div class="setting-label">${t('settings_pomo_short', lang)}</div>
+      <div class="setting-desc">Short rest interval between work rounds.</div>
+    </div>
+  `;
+  const pomoShortStepper = createStepper({
+    value: settings.pomodoro.shortBreakMinutes,
+    min: 1,
+    max: 30,
+    step: 1,
+    unit: 'm',
+    onChange: async (val) => {
+      const pomodoro = { ...settings.pomodoro, shortBreakMinutes: val };
+      const updated = await window.deskpals.updateSettings({ pomodoro });
+      onSettingsChange(updated);
+    },
+  });
+  pomoShortRow.appendChild(pomoShortStepper);
+  pomoBody.appendChild(pomoShortRow);
+
+  // Long Break
+  const pomoLongRow = document.createElement('div');
+  pomoLongRow.className = 'setting-row';
+  pomoLongRow.innerHTML = `
+    <div class="setting-info">
+      <div class="setting-label">${t('settings_pomo_long', lang)}</div>
+      <div class="setting-desc">Extended rest interval after completing multiple rounds.</div>
+    </div>
+  `;
+  const pomoLongStepper = createStepper({
+    value: settings.pomodoro.longBreakMinutes,
+    min: 5,
+    max: 60,
+    step: 5,
+    unit: 'm',
+    onChange: async (val) => {
+      const pomodoro = { ...settings.pomodoro, longBreakMinutes: val };
+      const updated = await window.deskpals.updateSettings({ pomodoro });
+      onSettingsChange(updated);
+    },
+  });
+  pomoLongRow.appendChild(pomoLongStepper);
+  pomoBody.appendChild(pomoLongRow);
+
+  // Rounds Before Long Break
+  const pomoRoundsRow = document.createElement('div');
+  pomoRoundsRow.className = 'setting-row';
+  pomoRoundsRow.innerHTML = `
+    <div class="setting-info">
+      <div class="setting-label">${t('settings_pomo_rounds', lang)}</div>
+      <div class="setting-desc">Number of work rounds before taking a long break.</div>
+    </div>
+  `;
+  const pomoRoundsStepper = createStepper({
+    value: settings.pomodoro.roundsBeforeLongBreak,
+    min: 1,
+    max: 10,
+    step: 1,
+    unit: '',
+    onChange: async (val) => {
+      const pomodoro = { ...settings.pomodoro, roundsBeforeLongBreak: val };
+      const updated = await window.deskpals.updateSettings({ pomodoro });
+      onSettingsChange(updated);
+    },
+  });
+  pomoRoundsRow.appendChild(pomoRoundsStepper);
+  pomoBody.appendChild(pomoRoundsRow);
+
+  // Auto Start Next Phase
+  const pomoAutoRow = document.createElement('div');
+  pomoAutoRow.className = 'setting-row';
+  pomoAutoRow.innerHTML = `
+    <div class="setting-info">
+      <div class="setting-label">${t('settings_pomo_autostart', lang)}</div>
+      <div class="setting-desc">Automatically begin the next phase when timer completes.</div>
+    </div>
+  `;
+  const pomoAutoToggle = createToggle({
+    checked: settings.pomodoro.autoStartNext,
+    onChange: async (checked) => {
+      const pomodoro = { ...settings.pomodoro, autoStartNext: checked };
+      const updated = await window.deskpals.updateSettings({ pomodoro });
+      onSettingsChange(updated);
+    },
+  });
+  pomoAutoRow.appendChild(pomoAutoToggle);
+  pomoBody.appendChild(pomoAutoRow);
+
+  container.appendChild(pomoCard);
+
   // Focus Mode Card
   const { card: focusCard, body: focusBody } = createCard(t('settings_focus', lang));
 

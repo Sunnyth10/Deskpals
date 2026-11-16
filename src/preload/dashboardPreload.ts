@@ -3,7 +3,7 @@ import { IPC_CHANNELS } from '../shared/ipc-channels';
 import type { Settings, DashboardTab } from '../core/settings';
 import type { SevenDaysSummary, HeatmapGrid } from '../core/stats';
 import type { ReminderItem } from '../core/reminders';
-import type { FocusStatus } from '../shared/ipc-channels';
+import type { FocusStatus, PomodoroStatus } from '../shared/ipc-channels';
 
 export interface DashboardApi {
   getSettings(): Promise<Settings>;
@@ -20,6 +20,12 @@ export interface DashboardApi {
   stopFocus(): Promise<FocusStatus>;
   getFocusStatus(): Promise<FocusStatus>;
   onFocusStatus(cb: (status: FocusStatus) => void): () => void;
+  getPomodoroStatus(): Promise<PomodoroStatus>;
+  startPomodoro(): Promise<PomodoroStatus>;
+  pausePomodoro(): Promise<PomodoroStatus>;
+  skipPomodoro(): Promise<PomodoroStatus>;
+  resetPomodoro(): Promise<PomodoroStatus>;
+  onPomodoroStatusChanged(cb: (status: PomodoroStatus) => void): () => void;
   setTab(tab: DashboardTab): void;
   getActiveApp(): Promise<string | null>;
 }
@@ -51,6 +57,16 @@ const api: DashboardApi = {
     const handler = (_event: unknown, status: FocusStatus) => cb(status);
     ipcRenderer.on(IPC_CHANNELS.FOCUS_STATE_CHANGED, handler);
     return () => ipcRenderer.removeListener(IPC_CHANNELS.FOCUS_STATE_CHANGED, handler);
+  },
+  getPomodoroStatus: () => ipcRenderer.invoke(IPC_CHANNELS.POMODORO_GET_STATUS),
+  startPomodoro: () => ipcRenderer.invoke(IPC_CHANNELS.POMODORO_START),
+  pausePomodoro: () => ipcRenderer.invoke(IPC_CHANNELS.POMODORO_PAUSE),
+  skipPomodoro: () => ipcRenderer.invoke(IPC_CHANNELS.POMODORO_SKIP),
+  resetPomodoro: () => ipcRenderer.invoke(IPC_CHANNELS.POMODORO_RESET),
+  onPomodoroStatusChanged: (cb) => {
+    const handler = (_event: unknown, status: PomodoroStatus) => cb(status);
+    ipcRenderer.on(IPC_CHANNELS.POMODORO_STATUS_CHANGED, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.POMODORO_STATUS_CHANGED, handler);
   },
   setTab: (tab) => ipcRenderer.send(IPC_CHANNELS.DASHBOARD_TAB_CHANGED, tab),
   getActiveApp: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_ACTIVE_APP),

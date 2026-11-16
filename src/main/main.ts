@@ -47,6 +47,17 @@ import {
   parseStats,
   type DailyStats,
 } from '../core/stats';
+import {
+  createInitialPomodoroState,
+  getPomodoroStatus,
+  startPomodoro,
+  pausePomodoro,
+  skipPomodoro,
+  resetPomodoro,
+  tickPomodoro,
+  type PomodoroState,
+  type PomodoroStatus,
+} from '../core/pomodoro';
 import { IPC_CHANNELS, type FocusStatus, type SpeechBubbleMessage, type CountdownPayload } from '../shared/ipc-channels';
 import { t } from '../core/i18n';
 
@@ -70,6 +81,7 @@ if (!app.requestSingleInstanceLock()) {
 /* ------------------------------- settings & logs ------------------------------- */
 
 let settings: Settings = { ...DEFAULT_SETTINGS };
+let pomodoroState: PomodoroState = createInitialPomodoroState(DEFAULT_SETTINGS.pomodoro);
 const settingsFile = (): string => path.join(app.getPath('userData'), 'settings.json');
 const statsFile = (): string => path.join(app.getPath('userData'), 'stats.json');
 const logFile = (): string => path.join(app.getPath('userData'), 'logs', 'main.log');
@@ -411,6 +423,27 @@ function buildMenu(): Menu {
         click: () => sendOverlay('companions:event', ev),
       })),
     },
+    { type: 'separator' },
+    {
+      label: getPomodoroStatus(pomodoroState, settings.pomodoro).phase === 'idle'
+        ? '🍅 Start pomodoro'
+        : getPomodoroStatus(pomodoroState, settings.pomodoro).paused
+          ? `🍅 Resume pomodoro (${getPomodoroStatus(pomodoroState, settings.pomodoro).formattedTime})`
+          : `🍅 Pause pomodoro (${getPomodoroStatus(pomodoroState, settings.pomodoro).formattedTime})`,
+      click: () => {
+        const s = getPomodoroStatus(pomodoroState, settings.pomodoro);
+        if (s.phase === 'idle' || s.paused) {
+          handleStartPomodoro();
+        } else {
+          handlePausePomodoro();
+        }
+      },
+    },
+    {
+      label: '⏹ Stop pomodoro',
+      enabled: getPomodoroStatus(pomodoroState, settings.pomodoro).phase !== 'idle',
+      click: () => handleResetPomodoro(),
+    },
   ];
 
   if (displays.length > 1) {
@@ -632,6 +665,142 @@ function checkDistractions(): void {
   }
 }
 
+/* --------------------------------- Pomodoro Engine --------------------------------- */
+
+function broadcastPomodoroStatus(): void {
+  const status = getPomodoroStatus(pomodoroState, settings.pomodoro);
+  if (dashboardWin && !dashboardWin.isDestroyed()) {
+    dashboardWin.webContents.send(IPC_CHANNELS.POMODORO_STATUS_CHANGED, status);
+  }
+}
+
+function handleStartPomodoro(): PomodoroStatus {
+  pomodoroState = startPomodoro(pomodoroState, settings.pomodoro);
+  // SINGLE SOURCE OF TRUTH FOR FOCUS: Pomodoro work phases represent dedicated focus time.
+  // When a Pomodoro work phase is active, the standard Focus monitor is linked directly to the Pomodoro timer.
+  // If a Pomodoro work phase completes, it logs focusMinutes directly and resets any overlapping manual session to prevent double-counting.
+  if (pomodoroState.phase === 'work' && !focusActive) {
+    focusActive = true;
+    focusSessionEndTime = pomodoroState.targetTimestamp ?? (Date.now() + settings.pomodoro.workMinutes * 60000);
+    focusTotalMinutes = settings.pomodoro.workMinutes;
+    broadcastFocusState();
+  }
+  broadcastPomodoroStatus();
+  refreshMenu();
+  return getPomodoroStatus(pomodoroState, settings.pomodoro);
+}
+
+function handlePausePomodoro(): PomodoroStatus {
+  pomodoroState = pausePomodoro(pomodoroState);
+  if (focusActive) {
+    focusActive = false;
+    broadcastFocusState();
+  }
+  broadcastPomodoroStatus();
+  refreshMenu();
+  return getPomodoroStatus(pomodoroState, settings.pomodoro);
+}
+
+function handleSkipPomodoro(): PomodoroStatus {
+  pomodoroState = skipPomodoro(pomodoroState, settings.pomodoro);
+  if (pomodoroState.phase === 'work' && !pomodoroState.paused) {
+    focusActive = true;
+    focusSessionEndTime = pomodoroState.targetTimestamp ?? (Date.now() + settings.pomodoro.workMinutes * 60000);
+    focusTotalMinutes = settings.pomodoro.workMinutes;
+  } else {
+    focusActive = false;
+  }
+  broadcastFocusState();
+  broadcastPomodoroStatus();
+  refreshMenu();
+  return getPomodoroStatus(pomodoroState, settings.pomodoro);
+}
+
+function handleResetPomodoro(): PomodoroStatus {
+  pomodoroState = resetPomodoro(settings.pomodoro);
+  if (focusActive) {
+    focusActive = false;
+    broadcastFocusState();
+  }
+  broadcastPomodoroStatus();
+  refreshMenu();
+  return getPomodoroStatus(pomodoroState, settings.pomodoro);
+}
+
+function tickPomodoroEngine(): void {
+  const now = Date.now();
+  const { newState, completedPhase, completedMinutes } = tickPomodoro(pomodoroState, settings.pomodoro, now);
+  pomodoroState = newState;
+
+  if (completedPhase) {
+    const lang = settings.language;
+    if (completedPhase === 'work') {
+      // Completed full work phase
+      recordStat('pomodoros', 1);
+      recordStat('focusMinutes', completedMinutes);
+      focusActive = false;
+      broadcastFocusState();
+
+      showCompanionBubble({
+        id: `pomo-work-${now}`,
+        text: t('pomo_work_done', lang),
+        kind: 'info',
+        durationSeconds: settings.appearance.bubbleDurationSeconds + 2,
+        subtext: t('pomo_take_break', lang),
+      });
+
+      if (Notification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
+        new Notification({
+          title: 'DeskPals Pomodoro',
+          body: `${t('pomo_work_done', lang)} ${t('pomo_take_break', lang)}`,
+        }).show();
+      }
+    } else if (completedPhase === 'shortBreak') {
+      showCompanionBubble({
+        id: `pomo-short-${now}`,
+        text: t('pomo_break_done', lang),
+        kind: 'info',
+        durationSeconds: settings.appearance.bubbleDurationSeconds + 2,
+        subtext: t('pomo_back_to_work', lang),
+      });
+
+      if (Notification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
+        new Notification({
+          title: 'DeskPals Pomodoro',
+          body: `${t('pomo_break_done', lang)} ${t('pomo_back_to_work', lang)}`,
+        }).show();
+      }
+    } else if (completedPhase === 'longBreak') {
+      showCompanionBubble({
+        id: `pomo-long-${now}`,
+        text: t('pomo_long_break_done', lang),
+        kind: 'info',
+        durationSeconds: settings.appearance.bubbleDurationSeconds + 2,
+        subtext: t('pomo_long_break_sub', lang),
+      });
+
+      if (Notification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
+        new Notification({
+          title: 'DeskPals Pomodoro',
+          body: `${t('pomo_long_break_done', lang)} ${t('pomo_long_break_sub', lang)}`,
+        }).show();
+      }
+    }
+
+    if (pomodoroState.phase === 'work' && !pomodoroState.paused) {
+      focusActive = true;
+      focusSessionEndTime = pomodoroState.targetTimestamp ?? (Date.now() + settings.pomodoro.workMinutes * 60000);
+      focusTotalMinutes = settings.pomodoro.workMinutes;
+      broadcastFocusState();
+    }
+
+    broadcastPomodoroStatus();
+    refreshMenu();
+  } else if (pomodoroState.phase !== 'idle' && !pomodoroState.paused) {
+    broadcastPomodoroStatus();
+  }
+}
+
 /* --------------------------------- IPC Handlers --------------------------------- */
 
 ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, () => settings);
@@ -735,6 +904,12 @@ ipcMain.handle(IPC_CHANNELS.FOCUS_STATUS, () => {
     currentDistractions: focusDistractions,
   };
 });
+
+ipcMain.handle(IPC_CHANNELS.POMODORO_GET_STATUS, () => getPomodoroStatus(pomodoroState, settings.pomodoro));
+ipcMain.handle(IPC_CHANNELS.POMODORO_START, () => handleStartPomodoro());
+ipcMain.handle(IPC_CHANNELS.POMODORO_PAUSE, () => handlePausePomodoro());
+ipcMain.handle(IPC_CHANNELS.POMODORO_SKIP, () => handleSkipPomodoro());
+ipcMain.handle(IPC_CHANNELS.POMODORO_RESET, () => handleResetPomodoro());
 
 ipcMain.handle(IPC_CHANNELS.APP_GET_ACTIVE_APP, () => {
   return currentForegroundAppInfo().name;
@@ -878,7 +1053,8 @@ app.whenReady().then(() => {
 
   // Active timers
   setInterval(checkSchedulerTicker, 10000); // Check reminders every 10s
-  setInterval(minuteTicker, 60000); // Check breaks, water, focus countdown every 1m
+  setInterval(minuteTicker, 60000); // Check focus countdown every 1m
+  setInterval(tickPomodoroEngine, 1000); // Pomodoro engine ticker every 1s
   setInterval(checkDistractions, 4000); // Check distraction poller during focus
 
   if (DEBUG) {

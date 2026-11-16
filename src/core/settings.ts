@@ -2,6 +2,8 @@ import type { SupportedLanguage } from './i18n';
 export type { SupportedLanguage };
 import type { ReminderItem } from './reminders';
 import { formatDateKey } from './stats';
+import { DEFAULT_POMODORO_SETTINGS, type PomodoroSettings } from './pomodoro';
+export type { PomodoroSettings };
 
 export type CompanionName = 'cat' | 'fox' | 'ghost' | 'robot' | 'webhero';
 export type DashboardTab = 'stats' | 'pet' | 'reminders' | 'settings';
@@ -41,6 +43,7 @@ export interface Settings {
   motion: MotionSettings;
   reminders: ReminderItem[];
   focus: FocusSettings;
+  pomodoro: PomodoroSettings;
 }
 
 export const COMPANION_NAMES: readonly CompanionName[] = ['cat', 'fox', 'ghost', 'robot', 'webhero'];
@@ -79,6 +82,7 @@ export const DEFAULT_SETTINGS: Settings = {
     blockedApps: ['Twitter', 'X', 'Reddit', 'Discord', 'YouTube', 'Steam', 'TikTok'],
     blockedKeywords: ['twitter', 'reddit', 'facebook', 'instagram', 'youtube', 'netflix', 'game'],
   },
+  pomodoro: DEFAULT_POMODORO_SETTINGS,
 };
 
 /** Enforce the one-companion renderer contract; invalid or empty IPC data falls back to cat. */
@@ -212,6 +216,30 @@ export function parseSettings(contents: string): Settings {
       : [...DEFAULT_SETTINGS.focus.blockedKeywords],
   };
 
+  // Pomodoro migration
+  const rawPomo = (raw.pomodoro && typeof raw.pomodoro === 'object'
+    ? raw.pomodoro
+    : {}) as Record<string, unknown>;
+  const pomodoro: PomodoroSettings = {
+    workMinutes:
+      typeof rawPomo.workMinutes === 'number' && Number.isFinite(rawPomo.workMinutes)
+        ? Math.min(120, Math.max(1, Math.round(rawPomo.workMinutes)))
+        : DEFAULT_SETTINGS.pomodoro.workMinutes,
+    shortBreakMinutes:
+      typeof rawPomo.shortBreakMinutes === 'number' && Number.isFinite(rawPomo.shortBreakMinutes)
+        ? Math.min(60, Math.max(1, Math.round(rawPomo.shortBreakMinutes)))
+        : DEFAULT_SETTINGS.pomodoro.shortBreakMinutes,
+    longBreakMinutes:
+      typeof rawPomo.longBreakMinutes === 'number' && Number.isFinite(rawPomo.longBreakMinutes)
+        ? Math.min(90, Math.max(1, Math.round(rawPomo.longBreakMinutes)))
+        : DEFAULT_SETTINGS.pomodoro.longBreakMinutes,
+    roundsBeforeLongBreak:
+      typeof rawPomo.roundsBeforeLongBreak === 'number' && Number.isFinite(rawPomo.roundsBeforeLongBreak)
+        ? Math.min(12, Math.max(1, Math.round(rawPomo.roundsBeforeLongBreak)))
+        : DEFAULT_SETTINGS.pomodoro.roundsBeforeLongBreak,
+    autoStartNext: rawPomo.autoStartNext === true,
+  };
+
   return {
     companion: selected,
     companionScales,
@@ -229,5 +257,6 @@ export function parseSettings(contents: string): Settings {
     motion,
     reminders,
     focus,
+    pomodoro,
   };
 }

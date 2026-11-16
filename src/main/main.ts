@@ -116,6 +116,20 @@ function logError(message: string, error?: unknown): void {
   console.error(line.trim());
 }
 
+function showNativeNotification(title: string, body: string, silent = false): void {
+  try {
+    if (ElectronNotification.isSupported()) {
+      new ElectronNotification({
+        title,
+        body,
+        silent,
+      }).show();
+    }
+  } catch (err) {
+    logError('failed to show native notification', err);
+  }
+}
+
 process.on('uncaughtException', (error) => {
   logError('uncaught exception', error);
 });
@@ -441,6 +455,90 @@ function openDashboard(tab?: DashboardTab): void {
   });
 }
 
+/* ------------------------ focus & pomodoro engine ------------------------ */
+
+// Focus session state
+let focusActive = false;
+let focusSessionEndTime = 0;
+let focusTotalMinutes = 25;
+let focusDistractions = 0;
+let lastDistractionCheckTime = 0;
+
+function broadcastFocusState(): void {
+  const remaining = focusActive
+    ? Math.max(0, Math.ceil((focusSessionEndTime - Date.now()) / (60 * 1000)))
+    : 0;
+  const payload: FocusStatus = {
+    active: focusActive,
+    minutesRemaining: remaining,
+    totalSessionMinutes: focusTotalMinutes,
+    currentDistractions: focusDistractions,
+  };
+  if (dashboardWin && !dashboardWin.isDestroyed()) {
+    dashboardWin.webContents.send(IPC_CHANNELS.FOCUS_STATE_CHANGED, payload);
+  }
+}
+
+function broadcastPomodoroStatus(): void {
+  const status = getPomodoroStatus(pomodoroState, settings.pomodoro);
+  if (dashboardWin && !dashboardWin.isDestroyed()) {
+    dashboardWin.webContents.send(IPC_CHANNELS.POMODORO_STATUS_CHANGED, status);
+  }
+}
+
+function handleStartPomodoro(): PomodoroStatus {
+  pomodoroState = startPomodoro(pomodoroState, settings.pomodoro);
+  // SINGLE SOURCE OF TRUTH FOR FOCUS: Pomodoro work phases represent dedicated focus time.
+  // When a Pomodoro work phase is active, the standard Focus monitor is linked directly to the Pomodoro timer.
+  // If a Pomodoro work phase completes, it logs focusMinutes directly and resets any overlapping manual session to prevent double-counting.
+  if (pomodoroState.phase === 'work' && !focusActive) {
+    focusActive = true;
+    focusSessionEndTime = pomodoroState.targetTimestamp ?? (Date.now() + settings.pomodoro.workMinutes * 60000);
+    focusTotalMinutes = settings.pomodoro.workMinutes;
+    broadcastFocusState();
+  }
+  broadcastPomodoroStatus();
+  refreshMenu();
+  return getPomodoroStatus(pomodoroState, settings.pomodoro);
+}
+
+function handlePausePomodoro(): PomodoroStatus {
+  pomodoroState = pausePomodoro(pomodoroState);
+  if (focusActive) {
+    focusActive = false;
+    broadcastFocusState();
+  }
+  broadcastPomodoroStatus();
+  refreshMenu();
+  return getPomodoroStatus(pomodoroState, settings.pomodoro);
+}
+
+function handleSkipPomodoro(): PomodoroStatus {
+  pomodoroState = skipPomodoro(pomodoroState, settings.pomodoro);
+  if (pomodoroState.phase === 'work' && !pomodoroState.paused) {
+    focusActive = true;
+    focusSessionEndTime = pomodoroState.targetTimestamp ?? (Date.now() + settings.pomodoro.workMinutes * 60000);
+    focusTotalMinutes = settings.pomodoro.workMinutes;
+  } else {
+    focusActive = false;
+  }
+  broadcastFocusState();
+  broadcastPomodoroStatus();
+  refreshMenu();
+  return getPomodoroStatus(pomodoroState, settings.pomodoro);
+}
+
+function handleResetPomodoro(): PomodoroStatus {
+  pomodoroState = resetPomodoro(settings.pomodoro);
+  if (focusActive) {
+    focusActive = false;
+    broadcastFocusState();
+  }
+  broadcastPomodoroStatus();
+  refreshMenu();
+  return getPomodoroStatus(pomodoroState, settings.pomodoro);
+}
+
 /* ---------------------------------- menu --------------------------------- */
 
 function buildMenu(): Menu {
@@ -561,28 +659,6 @@ function refreshMenu(): void {
 const firedRemindersToday = new Set<string>();
 let lastMidnightDate = formatDateKey(new Date());
 
-// Focus session state
-let focusActive = false;
-let focusSessionEndTime = 0;
-let focusTotalMinutes = 25;
-let focusDistractions = 0;
-let lastDistractionCheckTime = 0;
-
-function broadcastFocusState(): void {
-  const remaining = focusActive
-    ? Math.max(0, Math.ceil((focusSessionEndTime - Date.now()) / (60 * 1000)))
-    : 0;
-  const payload: FocusStatus = {
-    active: focusActive,
-    minutesRemaining: remaining,
-    totalSessionMinutes: focusTotalMinutes,
-    currentDistractions: focusDistractions,
-  };
-  if (dashboardWin && !dashboardWin.isDestroyed()) {
-    dashboardWin.webContents.send(IPC_CHANNELS.FOCUS_STATE_CHANGED, payload);
-  }
-}
-
 function checkSchedulerTicker(): void {
   const now = new Date();
   const currentDateKey = formatDateKey(now);
@@ -621,13 +697,7 @@ function checkSchedulerTicker(): void {
       }
 
       // Native notification fallback
-      if (ElectronNotification.isSupported()) {
-        new ElectronNotification({
-          title: 'DeskPals Reminder',
-          body: reminder.task,
-          silent: false,
-        }).show();
-      }
+      showNativeNotification('DeskPals Reminder', reminder.task, false);
     } else if (!alreadyFired) {
       // If reminder was scheduled in the past today by more than 60s (e.g. app launched late),
       // mark it fired so it does not fire stale notifications or show a countdown for the past.
@@ -680,12 +750,10 @@ function minuteTicker(): void {
         durationSeconds: 8,
         subtext: `Logged ${focusTotalMinutes} minutes of deep work.`,
       });
-      if (ElectronNotification.isSupported()) {
-        new ElectronNotification({
-          title: 'DeskPals Focus Mode',
-          body: `Focus session complete! Logged ${focusTotalMinutes} minutes.`,
-        }).show();
-      }
+      showNativeNotification(
+        'DeskPals Focus Mode',
+        `Focus session complete! Logged ${focusTotalMinutes} minutes.`,
+      );
       broadcastFocusState();
     } else {
       broadcastFocusState();
@@ -726,66 +794,6 @@ function checkDistractions(): void {
 
 /* --------------------------------- Pomodoro Engine --------------------------------- */
 
-function broadcastPomodoroStatus(): void {
-  const status = getPomodoroStatus(pomodoroState, settings.pomodoro);
-  if (dashboardWin && !dashboardWin.isDestroyed()) {
-    dashboardWin.webContents.send(IPC_CHANNELS.POMODORO_STATUS_CHANGED, status);
-  }
-}
-
-function handleStartPomodoro(): PomodoroStatus {
-  pomodoroState = startPomodoro(pomodoroState, settings.pomodoro);
-  // SINGLE SOURCE OF TRUTH FOR FOCUS: Pomodoro work phases represent dedicated focus time.
-  // When a Pomodoro work phase is active, the standard Focus monitor is linked directly to the Pomodoro timer.
-  // If a Pomodoro work phase completes, it logs focusMinutes directly and resets any overlapping manual session to prevent double-counting.
-  if (pomodoroState.phase === 'work' && !focusActive) {
-    focusActive = true;
-    focusSessionEndTime = pomodoroState.targetTimestamp ?? (Date.now() + settings.pomodoro.workMinutes * 60000);
-    focusTotalMinutes = settings.pomodoro.workMinutes;
-    broadcastFocusState();
-  }
-  broadcastPomodoroStatus();
-  refreshMenu();
-  return getPomodoroStatus(pomodoroState, settings.pomodoro);
-}
-
-function handlePausePomodoro(): PomodoroStatus {
-  pomodoroState = pausePomodoro(pomodoroState);
-  if (focusActive) {
-    focusActive = false;
-    broadcastFocusState();
-  }
-  broadcastPomodoroStatus();
-  refreshMenu();
-  return getPomodoroStatus(pomodoroState, settings.pomodoro);
-}
-
-function handleSkipPomodoro(): PomodoroStatus {
-  pomodoroState = skipPomodoro(pomodoroState, settings.pomodoro);
-  if (pomodoroState.phase === 'work' && !pomodoroState.paused) {
-    focusActive = true;
-    focusSessionEndTime = pomodoroState.targetTimestamp ?? (Date.now() + settings.pomodoro.workMinutes * 60000);
-    focusTotalMinutes = settings.pomodoro.workMinutes;
-  } else {
-    focusActive = false;
-  }
-  broadcastFocusState();
-  broadcastPomodoroStatus();
-  refreshMenu();
-  return getPomodoroStatus(pomodoroState, settings.pomodoro);
-}
-
-function handleResetPomodoro(): PomodoroStatus {
-  pomodoroState = resetPomodoro(settings.pomodoro);
-  if (focusActive) {
-    focusActive = false;
-    broadcastFocusState();
-  }
-  broadcastPomodoroStatus();
-  refreshMenu();
-  return getPomodoroStatus(pomodoroState, settings.pomodoro);
-}
-
 function tickPomodoroEngine(): void {
   const now = Date.now();
   const { newState, completedPhase, completedMinutes } = tickPomodoro(pomodoroState, settings.pomodoro, now);
@@ -808,11 +816,11 @@ function tickPomodoroEngine(): void {
         subtext: t('pomo_take_break', lang),
       });
 
-      if (ElectronNotification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
-        new ElectronNotification({
-          title: 'DeskPals Pomodoro',
-          body: `${t('pomo_work_done', lang)} ${t('pomo_take_break', lang)}`,
-        }).show();
+      if (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible()) {
+        showNativeNotification(
+          'DeskPals Pomodoro',
+          `${t('pomo_work_done', lang)} ${t('pomo_take_break', lang)}`,
+        );
       }
     } else if (completedPhase === 'shortBreak') {
       showCompanionBubble({
@@ -823,11 +831,11 @@ function tickPomodoroEngine(): void {
         subtext: t('pomo_back_to_work', lang),
       });
 
-      if (ElectronNotification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
-        new ElectronNotification({
-          title: 'DeskPals Pomodoro',
-          body: `${t('pomo_break_done', lang)} ${t('pomo_back_to_work', lang)}`,
-        }).show();
+      if (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible()) {
+        showNativeNotification(
+          'DeskPals Pomodoro',
+          `${t('pomo_break_done', lang)} ${t('pomo_back_to_work', lang)}`,
+        );
       }
     } else if (completedPhase === 'longBreak') {
       showCompanionBubble({
@@ -838,11 +846,11 @@ function tickPomodoroEngine(): void {
         subtext: t('pomo_long_break_sub', lang),
       });
 
-      if (ElectronNotification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
-        new ElectronNotification({
-          title: 'DeskPals Pomodoro',
-          body: `${t('pomo_long_break_done', lang)} ${t('pomo_long_break_sub', lang)}`,
-        }).show();
+      if (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible()) {
+        showNativeNotification(
+          'DeskPals Pomodoro',
+          `${t('pomo_long_break_done', lang)} ${t('pomo_long_break_sub', lang)}`,
+        );
       }
     }
 

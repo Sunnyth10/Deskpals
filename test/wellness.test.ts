@@ -199,6 +199,7 @@ console.log('=== TEST SUITE 3: CONFIG MIGRATION & BACKWARD COMPATIBILITY ===');
   assert(legacy.paused === true, 'Preserves paused');
   assert(legacy.companionScales.fox === 100, 'Populates companion scales');
   assert(!('health' in legacy), 'Drops legacy health section safely');
+  assert(parseSettings('{"language":"hi"}').language === 'hi', 'Accepts Hindi language');
 
   // 3. Clamping boundary values
   const clamped = parseSettings(JSON.stringify({
@@ -478,10 +479,27 @@ console.log('=== TEST SUITE 5: TODOS SANITIZATION, ORDERING & COMPLETION ===');
   assert(tasksDoneToday === 2, 'Uncompleting an older task does NOT decrement today count');
 }
 
-console.log('=== TEST SUITE 6: I18N DICTIONARY ===');
+console.log('=== TEST SUITE 6: I18N DICTIONARY & MULTI-LANGUAGE SUPPORT ===');
 {
-  assert(t('nav_stats', 'en') === 'Stats', 'English translation works');
-  assert(t('nav_stats', 'es') === 'Estadísticas', 'Spanish translation works');
+  assert(t('nav_stats', 'en') === 'Stats', 'English nav_stats translation works');
+  assert(t('nav_stats', 'es') === 'Estadísticas', 'Spanish nav_stats translation works');
+  assert(t('nav_stats', 'hi') === 'आँकड़े', 'Hindi nav_stats translation works');
+
+  assert(t('nav_todo', 'en') === 'Todo', 'English nav_todo translation works');
+  assert(t('nav_todo', 'es') === 'Tareas', 'Spanish nav_todo translation works');
+  assert(t('nav_todo', 'hi') === 'कार्य सूची', 'Hindi nav_todo translation works');
+
+  assert(t('stats_pomodoros', 'en') === 'Pomodoros', 'English stats_pomodoros works');
+  assert(t('stats_pomodoros', 'es') === 'Pomodoros', 'Spanish stats_pomodoros works');
+  assert(t('stats_pomodoros', 'hi') === 'पोमोडोरो', 'Hindi stats_pomodoros works');
+
+  assert(t('pomo_work_done', 'en') === 'Pomodoro done! Take 5.', 'English pomo_work_done works');
+  assert(t('pomo_work_done', 'hi') === 'पोमोडोरो पूरा हुआ! 5 मिनट का ब्रेक लें।', 'Hindi pomo_work_done works');
+
+  assert(t('todo_bubble_done', 'en') === 'Nice! Task done.', 'English todo_bubble_done works');
+  assert(t('todo_bubble_done', 'es') === '¡Genial! Tarea completada.', 'Spanish todo_bubble_done works');
+  assert(t('todo_bubble_done', 'hi') === 'शाबाश! कार्य पूर्ण हुआ।', 'Hindi todo_bubble_done works');
+
   assert(t('unknown_key', 'en') === 'unknown_key', 'Fallback to key when missing');
 }
 

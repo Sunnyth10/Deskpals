@@ -38,6 +38,8 @@ check(selectSingleCompanion([]) === 'cat', 'renderer falls back to cat when sele
 let corruptSettingsRejected = false;
 try { parseSettings('{"companion":'); } catch { corruptSettingsRejected = true; }
 check(corruptSettingsRejected, 'corrupt settings rejected for safe default handling');
+check(parseSettings('{"activeTab":"todo"}').activeTab === 'todo', 'accepts new todo tab');
+check(parseSettings('{"language":"hi"}').language === 'hi', 'accepts hindi language');
 
 function step(stage: Stage, frames: number, dt = DT): void {
   for (let i = 0; i < frames; i++) {

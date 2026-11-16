@@ -1,9 +1,9 @@
 /**
  * Lightweight internationalization (i18n) dictionary.
- * Supports English ('en') and Spanish ('es') proof translation.
+ * Supports English ('en'), Spanish ('es'), and Hindi ('hi').
  */
 
-export type SupportedLanguage = 'en' | 'es';
+export type SupportedLanguage = 'en' | 'es' | 'hi';
 
 export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
   en: {
@@ -234,6 +234,121 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
 
     // Alerts
     nudge_distraction: '¡Distracción detectada! Vuelve a concentrarte.',
+  },
+
+  hi: {
+    // Navigation
+    nav_stats: 'आँकड़े',
+    nav_pet: 'पालतू जीव',
+    nav_todo: 'कार्य सूची',
+    nav_reminders: 'अनुस्मारक',
+    nav_settings: 'सेटिंग्स',
+
+    // Stats
+    stats_title: 'स्वास्थ्य और उत्पादकता आँकड़े',
+    stats_pomodoros: 'पोमोडोरो',
+    stats_tasks_done: 'पूर्ण कार्य',
+    stats_focus: 'एकाग्रता समय',
+    stats_distractions: 'भटकाव',
+    stats_companion_days: 'साथी के साथ दिन',
+    stats_days_active: 'दिन आपके साथी के साथ',
+    stats_focus_heatmap: 'एकाग्रता हीटमैप (पिछले 12 महीने)',
+    stats_less: 'कम',
+    stats_more: 'अधिक',
+    stats_today: 'आज',
+    stats_mon: 'सोम',
+    stats_wed: 'बुध',
+    stats_fri: 'शुक्र',
+
+    // Pet Tab
+    pet_title: 'अपना साथी चुनें',
+    pet_size: 'आकार बदलें',
+    pet_cat: 'बिल्ली',
+    pet_fox: 'लोमड़ी',
+    pet_ghost: 'भूत',
+    pet_robot: 'रोबोट',
+    pet_webhero: 'वेब हीरो',
+    pet_selected: 'सक्रिय',
+    pet_select_btn: 'चुनें',
+
+    // Todo Tab
+    todo_title: 'कार्य और टू-डू',
+    todo_placeholder: 'नया कार्य जोड़ें (जैसे रिपोर्ट लिखें, समीक्षा करें)...',
+    todo_add_btn: 'कार्य जोड़ें',
+    todo_priority_low: 'निम्न',
+    todo_priority_normal: 'सामान्य',
+    todo_priority_high: 'उच्च',
+    todo_open: 'बाकी',
+    todo_done_today: 'आज पूर्ण',
+    todo_empty: 'अभी कोई कार्य नहीं है। ऊपर नया कार्य जोड़ें!',
+    todo_completed_header: 'पूर्ण कार्य',
+    todo_clear_completed: 'पूर्ण कार्य हटाएं',
+    todo_bubble_done: 'शाबाश! कार्य पूर्ण हुआ।',
+
+    // Reminders Tab
+    reminders_title: 'दैनिक अनुस्मारक',
+    reminders_task_placeholder: 'दवा लें, थोड़ा घूमें, पानी पिएं...',
+    reminders_add_btn: 'अनुस्मारक जोड़ें',
+    reminders_time_label: 'समय',
+    reminders_enable: 'अनुस्मारक चालू करें',
+    reminders_pet_countdown: 'पालतू जीव उलटी गिनती',
+    reminders_show_before: 'पहले दिखाएं',
+    reminders_enlarge: 'अलर्ट पर बड़ा करें',
+    reminders_delete: 'हटाएं',
+    reminders_empty: 'कोई अनुस्मारक सेट नहीं है। ऊपर जोड़ें!',
+
+    // Settings Tab
+    settings_title: 'प्राथमिकताएं',
+    settings_language: 'भाषा',
+    settings_appearance: 'दिखावट',
+    settings_pet_size: 'पालतू जीव का आकार',
+    settings_lyrics_mode: 'पारदर्शी मोड',
+    settings_lyrics_desc: 'साथी दिखाई देगा पर क्लिक और ड्रैग नहीं होगा।',
+    settings_bubble_duration: 'बबल का समय',
+    settings_motion: 'गतिविधि',
+    settings_auto_run: 'स्वतः दौड़ना',
+    settings_run_direction: 'दौड़ने की दिशा',
+    settings_run_dir_left: 'केवल बाएं',
+    settings_run_dir_right: 'केवल दाएं',
+    settings_run_dir_both: 'दोनों दिशाएं',
+    settings_run_freq: 'दौड़ने की आवृत्ति',
+    settings_run_dur: 'दौड़ने की अवधि',
+    settings_idle_freq: 'विश्राम आवृत्ति',
+    settings_focus: 'एकाग्रता मोड',
+    settings_focus_enable: 'एकाग्रता मोड चालू करें',
+    settings_focus_duration: 'सत्र की अवधि',
+    settings_blocked_apps: 'अवरुद्ध ऐप्स (अल्पविराम से अलग करें)',
+    settings_blocked_keywords: 'अवरुद्ध कीवर्ड्स (अल्पविराम से अलग करें)',
+    settings_start_focus: 'एकाग्रता शुरू करें',
+    settings_stop_focus: 'एकाग्रता रोकें',
+    settings_focus_active: 'सक्रिय एकाग्रता सत्र',
+
+    // Pomodoro
+    pomo_title: 'पोमोडोरो टाइमर',
+    pomo_phase_idle: 'निष्क्रिय',
+    pomo_phase_work: 'एकाग्र कार्य',
+    pomo_phase_short: 'छोटा ब्रेक',
+    pomo_phase_long: 'लंबा ब्रेक',
+    pomo_round: 'दौर',
+    pomo_start: 'शुरू करें',
+    pomo_pause: 'रोकें',
+    pomo_skip: 'छोड़ें',
+    pomo_reset: 'रीसेट करें',
+    pomo_work_done: 'पोमोडोरो पूरा हुआ! 5 मिनट का ब्रेक लें।',
+    pomo_take_break: 'बहुत बढ़िया! थोड़ा आराम करें।',
+    pomo_break_done: 'ब्रेक समाप्त हुआ!',
+    pomo_back_to_work: 'वापस काम पर!',
+    pomo_long_break_done: 'लंबा ब्रेक पूरा हुआ!',
+    pomo_long_break_sub: 'ताजगी से भरपूर, नए काम के लिए तैयार!',
+    settings_pomodoro: 'पोमोडोरो टाइमर',
+    settings_pomo_work: 'कार्य अवधि',
+    settings_pomo_short: 'छोटे ब्रेक की अवधि',
+    settings_pomo_long: 'लंबे ब्रेक की अवधि',
+    settings_pomo_rounds: 'लंबे ब्रेक से पहले दौर',
+    settings_pomo_autostart: 'अगला चरण स्वतः शुरू करें',
+
+    // Alerts
+    nudge_distraction: 'भटकाव का पता चला! अपने काम पर ध्यान दें।',
   },
 };
 

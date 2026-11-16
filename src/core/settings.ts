@@ -95,7 +95,7 @@ export function selectSingleCompanion(names: readonly string[]): CompanionName {
 
 const VALID_TABS = new Set<DashboardTab>(['stats', 'pet', 'todo', 'reminders', 'settings']);
 const VALID_RUN_DIRECTIONS = new Set<RunDirection>(['left', 'right', 'both']);
-const VALID_LANGUAGES = new Set<SupportedLanguage>(['en', 'es']);
+const VALID_LANGUAGES = new Set<SupportedLanguage>(['en', 'es', 'hi']);
 
 /** Parse settings and safely migrate previous formats with complete schema defaults. */
 export function parseSettings(contents: string): Settings {

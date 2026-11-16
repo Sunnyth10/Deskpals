@@ -159,13 +159,14 @@ There are **5 companions** in the current release.
 
 ## 🚀 Features
 
-### Wellness & Dashboard (PawPause Inspiration)
-- 📊 **Stats Dashboard**: 4 seven-day sparkline cards (Breaks, Waters, Focus minutes, Distractions), "Companion Days" tracker, and a 52-week GitHub-style contribution heatmap powered by daily focus minutes.
+### Wellness & Productivity Dashboard
+- 📊 **Stats Dashboard**: 4 seven-day sparkline cards (Pomodoros, Tasks done, Focus minutes, Distractions) with "vs yesterday" comparison chips, "Companion Days" tracker, Focus Streak badge, and a 52-week GitHub-style contribution heatmap.
+- 🍅 **Pomodoro Timer Engine**: Deterministic timestamp-based main-process Pomodoro state machine (Work, Short Break, Long Break after N rounds) with live countdown display, Stats tab controls, and speech bubble celebrations.
+- 📝 **Todo Tab**: Full task management with priority levels (Low, Normal, High), inline editing, atomic persistence in `todos.json`, daily completion tracking, and collapsible completed view.
 - 🐱 **Pet Selector & Previews**: Live animated canvas previews of all 5 companions with individual per-companion scale adjustment.
 - ⏰ **Smart Reminders**: Daily recurring tasks with live ticking countdowns, speech bubble alerts, companion enlargement, and native system notification fallbacks.
-- 💧 **Health Nudges**: Configurable break reminders (with optional fullscreen break overlay) and water hydration tracking.
-- 🎯 **Focus Sessions & Distraction Shield**: Integrated Pomodoro-style focus timer with active window distraction detection against custom blocked apps and keywords.
-- 💬 **Speech Bubbles & Countdown Pills**: Anchored procedural balloons over your companions with animated entrance, auto-dismiss, and non-interactive Lyrics Mode support.
+- 🎯 **Focus Sessions & Distraction Shield**: Deep work timer with active window distraction detection against custom blocked apps and keywords.
+- 🌐 **Internationalization**: Localized across English (`en`), Spanish (`es`), and Hindi (`hi`).
 
 ### Core
 - 🪟 **Transparent always-on-top overlay.** Companions float above all apps.
@@ -731,13 +732,12 @@ Settings and wellness stats are stored locally in JSON format with automatic sch
     "runDurationSeconds": 4,
     "idleMotionFrequencySeconds": 8
   },
-  "health": {
-    "breakEnabled": true,
-    "breakIntervalMinutes": 45,
-    "breakModeFullscreen": false,
-    "waterEnabled": true,
-    "waterIntervalMinutes": 60,
-    "waterDailyGoal": 8
+  "pomodoro": {
+    "workMinutes": 25,
+    "shortBreakMinutes": 5,
+    "longBreakMinutes": 15,
+    "roundsBeforeLongBreak": 4,
+    "autoStartNext": false
   },
   "focus": {
     "enabled": false,

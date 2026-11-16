@@ -38,8 +38,13 @@ export function renderSettingsTab(
   optEs.value = 'es';
   optEs.innerText = 'Español';
   optEs.selected = settings.language === 'es';
+  const optHi = document.createElement('option');
+  optHi.value = 'hi';
+  optHi.innerText = 'हिन्दी';
+  optHi.selected = settings.language === 'hi';
   langSelect.appendChild(optEn);
   langSelect.appendChild(optEs);
+  langSelect.appendChild(optHi);
 
   langSelect.addEventListener('change', async () => {
     const newLang = langSelect.value as SupportedLanguage;

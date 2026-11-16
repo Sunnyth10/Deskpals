@@ -319,6 +319,16 @@ function currentForegroundAppInfo(): { bundleId: string | null; name: string | n
 
 function restoreForegroundApp(): void {
   if (process.platform !== 'darwin' || !foregroundAppBundleId) return;
+  try {
+    const current = currentForegroundAppInfo();
+    // If the active app never changed from the foreground app (thanks to NSWindowStyleMaskNonactivatingPanel),
+    // do not spawn /usr/bin/open to avoid unnecessary compositor flashes.
+    if (current.bundleId && current.bundleId === foregroundAppBundleId) {
+      return;
+    }
+  } catch {
+    /* fallback to spawn open */
+  }
   const child = spawn('/usr/bin/open', ['-b', foregroundAppBundleId], {
     detached: true,
     stdio: 'ignore',
@@ -342,6 +352,23 @@ function showCompanionBubble(msg: SpeechBubbleMessage): void {
 
 function triggerCompanionEnlarge(multiplier = 1.6, durationSeconds = 3.5): void {
   sendOverlay(IPC_CHANNELS.OVERLAY_ENLARGE, multiplier, durationSeconds);
+}
+
+function setupNativeNonActivatingPanel(overlay: BrowserWindow): void {
+  if (process.platform !== 'darwin') return;
+  try {
+    const addonPath = path.join(__dirname, 'native_focus_mac.node');
+    if (fs.existsSync(addonPath)) {
+      const nativeMod = require(addonPath);
+      if (typeof nativeMod?.makeNonActivating === 'function') {
+        const handle = overlay.getNativeWindowHandle();
+        const success = nativeMod.makeNonActivating(handle);
+        if (DEBUG) console.log('[native] makeNonActivating result:', success);
+      }
+    }
+  } catch (error) {
+    logError('could not enable native non-activating panel', error);
+  }
 }
 
 function createOverlay(): void {
@@ -378,7 +405,10 @@ function createOverlay(): void {
   overlay.setAlwaysOnTop(true, 'floating');
   overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
   overlay.setIgnoreMouseEvents(true, { forward: true });
-  if (process.platform === 'darwin') app.dock?.hide();
+  if (process.platform === 'darwin') {
+    app.dock?.hide();
+    setupNativeNonActivatingPanel(overlay);
+  }
 
   void overlay.loadFile(path.join(__dirname, 'index.html'), {
     query: DEBUG ? { debug: '1' } : undefined,

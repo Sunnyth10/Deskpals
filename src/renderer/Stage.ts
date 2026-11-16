@@ -164,6 +164,13 @@ export class Stage {
       }
       e.c.update(dt, this.bounds);
       if (!e.c.isAirborne()) e.c.x = clampCompanionX(e.name, e.c.x, this.bounds);
+      const companionSpecificScale = this.customScales[e.name] ?? 1.0;
+      const totalScale = this.globalScale * companionSpecificScale;
+      const minCeilY = this.bounds.y + 45 * totalScale;
+      if (e.c.y < minCeilY) {
+        e.c.y = minCeilY;
+        if ('vy' in c && typeof c.vy === 'number' && c.vy < 0) c.vy = 0;
+      }
     }
     this.particles.update(dt, this.bounds);
     this.bubbleManager.update();

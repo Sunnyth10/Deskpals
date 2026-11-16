@@ -67,4 +67,5 @@ export interface CountdownPayload {
   taskName: string;
   minutesLeft: number;
   formattedTime: string;
+  targetTimestamp?: number;
 }

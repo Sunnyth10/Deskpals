@@ -1063,7 +1063,7 @@ export class WebHeroCompanion implements IEntity {
     const { minX, maxX } = this.margins();
     this.dir = this.pickDir();
     const room = this.dir > 0 ? maxX - this.x : this.x - minX;
-    this.ay = b.y + 3 * s;
+    this.ay = Math.max(b.y + 25 * s, b.y + 30);
     this.lp = Math.max(28 * s, this.standY - 9 * s - this.ay);
     const sinT = clamp((room * 0.8) / (2 * this.lp), 0.22, 0.85);
     const th = Math.asin(sinT);
@@ -1208,19 +1208,20 @@ export class WebHeroCompanion implements IEntity {
     const hand = this.handWorld(w.side);
 
     if (this.phase === 'tingle') {
-      this.sense = 1;
+      this.sense = Math.max(0, 1 - (this.phaseT / 0.85));
       o.on = this.phaseT > 0.45;
       o.a = clamp01((this.phaseT - 0.45) / 0.35);
       if (this.phaseT >= 0.85) {
         this.phase = 'shoot';
         this.phaseT = 0;
+        this.sense = 0;
         w.on = true;
         w.ax = o.x;
         w.ay = o.y;
         this.burst(hand.x, hand.y, 5, '201,255,77');
       }
     } else if (this.phase === 'shoot') {
-      this.sense = Math.max(0, this.sense - step * 3);
+      this.sense = 0;
       w.k = clamp01(this.phaseT / 0.22);
       if (this.phaseT >= 0.22) {
         this.phase = 'pull';

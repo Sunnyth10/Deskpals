@@ -56,20 +56,31 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding-left: 78px; /* Safe clearance for macOS traffic lights */
+      min-height: 28px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       font-size: 15px;
       font-weight: 700;
       color: var(--text);
       letter-spacing: -0.3px;
     }
 
+    .brand-logo {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      object-fit: contain;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
     .brand-icon {
-      font-size: 18px;
+      font-size: 17px;
+      line-height: 1;
     }
 
     .segmented-tabs {
@@ -96,11 +107,24 @@
       transition: all 0.15s ease;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+    }
+
+    .tab-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: color 0.15s ease, transform 0.15s ease;
     }
 
     .tab-btn:hover {
       color: var(--text);
+    }
+
+    .tab-btn:hover .tab-icon {
+      color: var(--text);
+      transform: translateY(-1px);
     }
 
     .tab-btn.active {
@@ -108,6 +132,10 @@
       color: var(--text);
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
       border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .tab-btn.active .tab-icon {
+      color: var(--primary);
     }
 
     /* Main Container */
@@ -371,15 +399,46 @@
   <header>
     <div class="header-top">
       <div class="brand">
+        <img src="logo.png" class="brand-logo" alt="DeskPals Logo" onerror="this.style.display='none'">
         <span class="brand-icon">🐾</span>
         <span>DeskPals Dashboard</span>
       </div>
     </div>
     <div class="segmented-tabs" id="tab-bar">
-      <button class="tab-btn active" data-tab="stats">📊 <span id="label-tab-stats">Stats</span></button>
-      <button class="tab-btn" data-tab="pet">🐱 <span id="label-tab-pet">Pet</span></button>
-      <button class="tab-btn" data-tab="reminders">⏰ <span id="label-tab-reminders">Reminders</span></button>
-      <button class="tab-btn" data-tab="settings">⚙️ <span id="label-tab-settings">Settings</span></button>
+      <button class="tab-btn active" data-tab="stats">
+        <span class="tab-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" />
+          </svg>
+        </span>
+        <span id="label-tab-stats">Stats</span>
+      </button>
+      <button class="tab-btn" data-tab="pet">
+        <span class="tab-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-1.39 8.11.62 1.22.97 2.6.97 4.07 0 5.44-3.58 8.82-8 8.82s-8-3.38-8-8.82c0-1.47.35-2.85.97-4.07C3.99 9.99 2.17 3.57 3.58 3c1.39-.58 4.64.26 6.42 2.26.65-.17 1.33-.26 2-.26z" />
+            <path d="M9 14v.01" /><path d="M15 14v.01" />
+          </svg>
+        </span>
+        <span id="label-tab-pet">Pet</span>
+      </button>
+      <button class="tab-btn" data-tab="reminders">
+        <span class="tab-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2" /><path d="M5 3L2 6" /><path d="M22 6l-3-3" /><path d="M6.38 18.7L4 21" /><path d="M17.64 18.67L20 21" />
+          </svg>
+        </span>
+        <span id="label-tab-reminders">Reminders</span>
+      </button>
+      <button class="tab-btn" data-tab="settings">
+        <span class="tab-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </span>
+        <span id="label-tab-settings">Settings</span>
+      </button>
     </div>
   </header>
 

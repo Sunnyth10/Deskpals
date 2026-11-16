@@ -3,7 +3,7 @@ import type { ReminderItem } from '../../core/reminders';
 import { formatLiveNext } from '../../core/reminders';
 import type { Settings } from '../../core/settings';
 import { t } from '../../core/i18n';
-import { createCard, createStepper, createToggle } from './components';
+import { createCard, createSlider, createStepper, createToggle } from './components';
 
 declare global {
   interface Window {
@@ -199,30 +199,30 @@ export function renderRemindersTab(container: HTMLElement, settings: Settings): 
       enlargeCol.appendChild(enlargeLabel);
       controlsRow.appendChild(enlargeCol);
 
-      // 4. Show Before Stepper
-      const stepperCol = document.createElement('div');
-      stepperCol.style.display = 'flex';
-      stepperCol.style.alignItems = 'center';
-      stepperCol.style.gap = '8px';
-      const stepperLabel = document.createElement('span');
-      stepperLabel.innerText = t('reminders_show_before', lang) + ':';
-      stepperLabel.style.fontSize = '12px';
-      stepperLabel.style.color = 'var(--text-muted)';
-      const stepper = createStepper({
+      // 4. Show Before Slider
+      const sliderCol = document.createElement('div');
+      sliderCol.style.display = 'flex';
+      sliderCol.style.alignItems = 'center';
+      sliderCol.style.gap = '8px';
+      const sliderLabel = document.createElement('span');
+      sliderLabel.innerText = t('reminders_show_before', lang) + ':';
+      sliderLabel.style.fontSize = '12px';
+      sliderLabel.style.color = 'var(--text-muted)';
+      const slider = createSlider({
         value: reminder.showBeforeMinutes,
         min: 1,
         max: 60,
-        step: 5,
-        unit: 'm',
+        step: 1,
+        unit: 'min',
         onChange: async (val) => {
           reminder.showBeforeMinutes = val;
           remindersList = await window.deskpals.saveReminder(reminder);
           renderList();
         },
       });
-      stepperCol.appendChild(stepperLabel);
-      stepperCol.appendChild(stepper);
-      controlsRow.appendChild(stepperCol);
+      sliderCol.appendChild(sliderLabel);
+      sliderCol.appendChild(slider);
+      controlsRow.appendChild(sliderCol);
 
       card.appendChild(controlsRow);
       listContainer.appendChild(card);

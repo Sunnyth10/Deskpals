@@ -585,6 +585,7 @@ function checkSchedulerTicker(): void {
         taskName: reminder.task,
         minutesLeft: countdown.minutesLeft,
         formattedTime: reminder.time,
+        targetTimestamp: countdown.nextDate.getTime(),
       };
     }
 

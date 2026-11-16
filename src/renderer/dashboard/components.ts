@@ -75,6 +75,56 @@ export function createStepper(opts: StepperOptions): HTMLElement {
   return container;
 }
 
+export interface SliderOptions {
+  id?: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  unit?: string;
+  onChange: (val: number) => void;
+}
+
+export function createSlider(opts: SliderOptions): HTMLElement {
+  const container = document.createElement('div');
+  container.className = 'slider-group';
+  if (opts.id) container.id = opts.id;
+  container.style.display = 'flex';
+  container.style.alignItems = 'center';
+  container.style.gap = '8px';
+
+  const input = document.createElement('input');
+  input.type = 'range';
+  input.min = String(opts.min);
+  input.max = String(opts.max);
+  input.step = String(opts.step ?? 1);
+  input.value = String(opts.value);
+  input.style.accentColor = 'var(--primary)';
+  input.style.cursor = 'pointer';
+  input.style.width = '100px';
+
+  const display = document.createElement('span');
+  display.className = 'slider-value';
+  display.style.fontSize = '12px';
+  display.style.fontWeight = '600';
+  display.style.color = 'var(--text)';
+  display.style.minWidth = '38px';
+  const render = (v: number) => {
+    display.innerText = opts.unit ? `${v} ${opts.unit}` : `${v}`;
+  };
+  render(opts.value);
+
+  input.addEventListener('input', () => {
+    const v = Number(input.value);
+    render(v);
+    opts.onChange(v);
+  });
+
+  container.appendChild(input);
+  container.appendChild(display);
+  return container;
+}
+
 export interface ToggleOptions {
   id?: string;
   checked: boolean;

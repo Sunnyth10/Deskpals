@@ -182,7 +182,19 @@ export class SpeechBubbleManager {
     cd: CountdownPayload
   ): void {
     ctx.save();
-    const label = `⏰ ${cd.taskName}: ${cd.minutesLeft}m`;
+    let timeStr = `${cd.minutesLeft}m`;
+    if (cd.targetTimestamp && typeof cd.targetTimestamp === 'number') {
+      const diffSec = Math.max(0, Math.floor((cd.targetTimestamp - Date.now()) / 1000));
+      const hours = Math.floor(diffSec / 3600);
+      const minutes = Math.floor((diffSec % 3600) / 60);
+      const seconds = diffSec % 60;
+      if (hours > 0) {
+        timeStr = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      } else {
+        timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }
+    }
+    const label = `⏰ ${cd.taskName}: ${timeStr}`;
     ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     const textW = ctx.measureText(label).width;
 

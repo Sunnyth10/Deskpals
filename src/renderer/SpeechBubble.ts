@@ -240,7 +240,19 @@ export class SpeechBubbleManager {
 
     const r = pillH / 2;
     ctx.beginPath();
-    ctx.roundRect(pillX, pillY, pillW, pillH, r);
+    if (typeof (ctx as any).roundRect === 'function') {
+      (ctx as any).roundRect(pillX, pillY, pillW, pillH, r);
+    } else {
+      ctx.moveTo(pillX + r, pillY);
+      ctx.lineTo(pillX + pillW - r, pillY);
+      ctx.quadraticCurveTo(pillX + pillW, pillY, pillX + pillW, pillY + r);
+      ctx.lineTo(pillX + pillW, pillY + pillH - r);
+      ctx.quadraticCurveTo(pillX + pillW, pillY + pillH, pillX + pillW - r, pillY + pillH);
+      ctx.lineTo(pillX + r, pillY + pillH);
+      ctx.quadraticCurveTo(pillX, pillY + pillH, pillX, pillY + pillH - r);
+      ctx.lineTo(pillX, pillY + r);
+      ctx.quadraticCurveTo(pillX, pillY, pillX + r, pillY);
+    }
     ctx.fill();
     ctx.stroke();
 

@@ -19,7 +19,7 @@ import {
   nativeImage,
   screen,
   powerMonitor,
-  Notification,
+  Notification as ElectronNotification,
 } from 'electron';
 import { execFileSync, spawn } from 'child_process';
 import * as fs from 'fs';
@@ -621,8 +621,8 @@ function checkSchedulerTicker(): void {
       }
 
       // Native notification fallback
-      if (Notification.isSupported()) {
-        new Notification({
+      if (ElectronNotification.isSupported()) {
+        new ElectronNotification({
           title: 'DeskPals Reminder',
           body: reminder.task,
           silent: false,
@@ -680,8 +680,8 @@ function minuteTicker(): void {
         durationSeconds: 8,
         subtext: `Logged ${focusTotalMinutes} minutes of deep work.`,
       });
-      if (Notification.isSupported()) {
-        new Notification({
+      if (ElectronNotification.isSupported()) {
+        new ElectronNotification({
           title: 'DeskPals Focus Mode',
           body: `Focus session complete! Logged ${focusTotalMinutes} minutes.`,
         }).show();
@@ -808,8 +808,8 @@ function tickPomodoroEngine(): void {
         subtext: t('pomo_take_break', lang),
       });
 
-      if (Notification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
-        new Notification({
+      if (ElectronNotification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
+        new ElectronNotification({
           title: 'DeskPals Pomodoro',
           body: `${t('pomo_work_done', lang)} ${t('pomo_take_break', lang)}`,
         }).show();
@@ -823,8 +823,8 @@ function tickPomodoroEngine(): void {
         subtext: t('pomo_back_to_work', lang),
       });
 
-      if (Notification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
-        new Notification({
+      if (ElectronNotification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
+        new ElectronNotification({
           title: 'DeskPals Pomodoro',
           body: `${t('pomo_break_done', lang)} ${t('pomo_back_to_work', lang)}`,
         }).show();
@@ -838,8 +838,8 @@ function tickPomodoroEngine(): void {
         subtext: t('pomo_long_break_sub', lang),
       });
 
-      if (Notification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
-        new Notification({
+      if (ElectronNotification.isSupported() && (settings.paused || suspendReasons.size > 0 || !win || !win.isVisible())) {
+        new ElectronNotification({
           title: 'DeskPals Pomodoro',
           body: `${t('pomo_long_break_done', lang)} ${t('pomo_long_break_sub', lang)}`,
         }).show();

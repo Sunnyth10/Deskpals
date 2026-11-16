@@ -319,7 +319,14 @@ function currentForegroundAppInfo(): { bundleId: string | null; name: string | n
 
 function restoreForegroundApp(): void {
   if (process.platform !== 'darwin' || !foregroundAppBundleId) return;
-  const child = spawn('/usr/bin/open', ['-b', foregroundAppBundleId], {
+  // If the Dashboard window is currently open and visible, never steal focus away from it
+  if (dashboardWin && !dashboardWin.isDestroyed() && dashboardWin.isVisible()) {
+    foregroundAppBundleId = null;
+    return;
+  }
+  const targetBundleId = foregroundAppBundleId;
+  foregroundAppBundleId = null;
+  const child = spawn('/usr/bin/open', ['-b', targetBundleId], {
     detached: true,
     stdio: 'ignore',
   });
@@ -416,6 +423,9 @@ function placeOverlay(): void {
 /* ------------------------------- dashboard window ------------------------------ */
 
 function openDashboard(tab?: DashboardTab): void {
+  // Prevent any pending menu callback from stealing focus away from the dashboard
+  foregroundAppBundleId = null;
+
   if (tab) {
     settings.activeTab = tab;
     saveSettings();
@@ -1082,14 +1092,22 @@ ipcMain.on(IPC_CHANNELS.OVERLAY_READY, () => {
 
 ipcMain.on(IPC_CHANNELS.OVERLAY_INTERACTIVE, (_e, interactive: boolean) => {
   if (!win || win.isDestroyed()) return;
-  if (interactive && !companionGrabbed) foregroundAppBundleId = currentForegroundAppInfo().bundleId;
-  if (!interactive && !companionGrabbed) foregroundAppBundleId = null;
+  if (dashboardWin && !dashboardWin.isDestroyed() && dashboardWin.isFocused()) {
+    foregroundAppBundleId = null;
+  } else {
+    if (interactive && !companionGrabbed) foregroundAppBundleId = currentForegroundAppInfo().bundleId;
+    if (!interactive && !companionGrabbed) foregroundAppBundleId = null;
+  }
   win.setIgnoreMouseEvents(!interactive, { forward: true });
 });
 
 ipcMain.on(IPC_CHANNELS.OVERLAY_GRAB, (_e, grabbed: boolean) => {
   if (grabbed) {
-    if (!companionGrabbed && !foregroundAppBundleId) foregroundAppBundleId = currentForegroundAppInfo().bundleId;
+    if (dashboardWin && !dashboardWin.isDestroyed() && dashboardWin.isFocused()) {
+      foregroundAppBundleId = null;
+    } else if (!companionGrabbed && !foregroundAppBundleId) {
+      foregroundAppBundleId = currentForegroundAppInfo().bundleId;
+    }
     companionGrabbed = true;
     return;
   }
@@ -1100,7 +1118,9 @@ ipcMain.on(IPC_CHANNELS.OVERLAY_GRAB, (_e, grabbed: boolean) => {
 
 ipcMain.on(IPC_CHANNELS.OVERLAY_MENU, () => {
   if (!win || win.isDestroyed()) return;
-  if (!foregroundAppBundleId) foregroundAppBundleId = currentForegroundAppInfo().bundleId;
+  if (!dashboardWin || dashboardWin.isDestroyed() || !dashboardWin.isVisible()) {
+    if (!foregroundAppBundleId) foregroundAppBundleId = currentForegroundAppInfo().bundleId;
+  }
   buildMenu().popup({
     window: win,
     callback: () => restoreForegroundApp(),

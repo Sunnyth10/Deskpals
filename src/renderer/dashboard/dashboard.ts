@@ -3,6 +3,7 @@ import type { DashboardTab, Settings } from '../../core/settings';
 import { t } from '../../core/i18n';
 import { renderStatsTab } from './tabStats';
 import { renderPetTab } from './tabPet';
+import { renderTodoTab } from './tabTodo';
 import { renderRemindersTab } from './tabReminders';
 import { renderSettingsTab } from './tabSettings';
 
@@ -22,11 +23,13 @@ const tabBar = document.getElementById('tab-bar') as HTMLElement;
 function updateTabButtons(active: DashboardTab, lang: Settings['language']): void {
   const labelStats = document.getElementById('label-tab-stats');
   const labelPet = document.getElementById('label-tab-pet');
+  const labelTodo = document.getElementById('label-tab-todo');
   const labelReminders = document.getElementById('label-tab-reminders');
   const labelSettings = document.getElementById('label-tab-settings');
 
   if (labelStats) labelStats.innerText = t('nav_stats', lang);
   if (labelPet) labelPet.innerText = t('nav_pet', lang);
+  if (labelTodo) labelTodo.innerText = t('nav_todo', lang);
   if (labelReminders) labelReminders.innerText = t('nav_reminders', lang);
   if (labelSettings) labelSettings.innerText = t('nav_settings', lang);
 
@@ -61,6 +64,9 @@ async function switchTab(tab: DashboardTab): Promise<void> {
       renderPetTab(tabContent, currentSettings, (updated) => {
         currentSettings = updated;
       });
+      break;
+    case 'todo':
+      cleanupCurrentTab = renderTodoTab(tabContent, currentSettings);
       break;
     case 'reminders':
       cleanupCurrentTab = renderRemindersTab(tabContent, currentSettings);

@@ -6,6 +6,7 @@ export type { Settings } from '../core/settings';
 export type { DailyStats, SevenDaysSummary, HeatmapGrid } from '../core/stats';
 export type { ReminderItem, ScheduledAlert } from '../core/reminders';
 export type { PomodoroStatus, PomodoroPhase } from '../core/pomodoro';
+export type { TodoItem, TodoPriority } from '../core/todos';
 
 export const IPC_CHANNELS = {
   // Settings
@@ -37,6 +38,15 @@ export const IPC_CHANNELS = {
   POMODORO_SKIP: 'pomodoro:skip',
   POMODORO_RESET: 'pomodoro:reset',
   POMODORO_STATUS_CHANGED: 'pomodoro:status-changed',
+
+  // Todos
+  TODOS_GET: 'todos:get',
+  TODOS_ADD: 'todos:add',
+  TODOS_UPDATE: 'todos:update',
+  TODOS_TOGGLE: 'todos:toggle',
+  TODOS_DELETE: 'todos:delete',
+  TODOS_CLEAR_COMPLETED: 'todos:clear-completed',
+  TODOS_UPDATED: 'todos:updated',
 
   // Overlay interactions
   OVERLAY_READY: 'overlay:ready',

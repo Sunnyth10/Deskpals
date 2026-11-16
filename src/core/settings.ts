@@ -6,7 +6,7 @@ import { DEFAULT_POMODORO_SETTINGS, type PomodoroSettings } from './pomodoro';
 export type { PomodoroSettings };
 
 export type CompanionName = 'cat' | 'fox' | 'ghost' | 'robot' | 'webhero';
-export type DashboardTab = 'stats' | 'pet' | 'reminders' | 'settings';
+export type DashboardTab = 'stats' | 'pet' | 'todo' | 'reminders' | 'settings';
 export type RunDirection = 'left' | 'right' | 'both';
 
 export interface AppearanceSettings {
@@ -93,7 +93,7 @@ export function selectSingleCompanion(names: readonly string[]): CompanionName {
     : DEFAULT_SETTINGS.companion;
 }
 
-const VALID_TABS = new Set<DashboardTab>(['stats', 'pet', 'reminders', 'settings']);
+const VALID_TABS = new Set<DashboardTab>(['stats', 'pet', 'todo', 'reminders', 'settings']);
 const VALID_RUN_DIRECTIONS = new Set<RunDirection>(['left', 'right', 'both']);
 const VALID_LANGUAGES = new Set<SupportedLanguage>(['en', 'es']);
 

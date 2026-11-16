@@ -3,7 +3,7 @@ import { IPC_CHANNELS } from '../shared/ipc-channels';
 import type { Settings, DashboardTab } from '../core/settings';
 import type { SevenDaysSummary, HeatmapGrid } from '../core/stats';
 import type { ReminderItem } from '../core/reminders';
-import type { FocusStatus, PomodoroStatus } from '../shared/ipc-channels';
+import type { FocusStatus, PomodoroStatus, TodoItem, TodoPriority } from '../shared/ipc-channels';
 
 export interface DashboardApi {
   getSettings(): Promise<Settings>;
@@ -26,6 +26,13 @@ export interface DashboardApi {
   skipPomodoro(): Promise<PomodoroStatus>;
   resetPomodoro(): Promise<PomodoroStatus>;
   onPomodoroStatusChanged(cb: (status: PomodoroStatus) => void): () => void;
+  getTodos(): Promise<TodoItem[]>;
+  addTodo(text: string, priority?: TodoPriority): Promise<TodoItem[]>;
+  updateTodo(id: string, text: string): Promise<TodoItem[]>;
+  toggleTodo(id: string): Promise<TodoItem[]>;
+  deleteTodo(id: string): Promise<TodoItem[]>;
+  clearCompletedTodos(): Promise<TodoItem[]>;
+  onTodosUpdated(cb: () => void): () => void;
   setTab(tab: DashboardTab): void;
   getActiveApp(): Promise<string | null>;
 }
@@ -67,6 +74,17 @@ const api: DashboardApi = {
     const handler = (_event: unknown, status: PomodoroStatus) => cb(status);
     ipcRenderer.on(IPC_CHANNELS.POMODORO_STATUS_CHANGED, handler);
     return () => ipcRenderer.removeListener(IPC_CHANNELS.POMODORO_STATUS_CHANGED, handler);
+  },
+  getTodos: () => ipcRenderer.invoke(IPC_CHANNELS.TODOS_GET),
+  addTodo: (text, priority = 'normal') => ipcRenderer.invoke(IPC_CHANNELS.TODOS_ADD, { text, priority }),
+  updateTodo: (id, text) => ipcRenderer.invoke(IPC_CHANNELS.TODOS_UPDATE, { id, text }),
+  toggleTodo: (id) => ipcRenderer.invoke(IPC_CHANNELS.TODOS_TOGGLE, id),
+  deleteTodo: (id) => ipcRenderer.invoke(IPC_CHANNELS.TODOS_DELETE, id),
+  clearCompletedTodos: () => ipcRenderer.invoke(IPC_CHANNELS.TODOS_CLEAR_COMPLETED),
+  onTodosUpdated: (cb) => {
+    const handler = () => cb();
+    ipcRenderer.on(IPC_CHANNELS.TODOS_UPDATED, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.TODOS_UPDATED, handler);
   },
   setTab: (tab) => ipcRenderer.send(IPC_CHANNELS.DASHBOARD_TAB_CHANGED, tab),
   getActiveApp: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_ACTIVE_APP),

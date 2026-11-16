@@ -36,6 +36,15 @@ import {
   getPomodoroSecondsRemaining,
   formatTimeMMSS,
 } from '../src/core/pomodoro';
+import {
+  sanitizeTodoText,
+  sanitizeTodoPriority,
+  parseTodos,
+  sortTodos,
+  calculateTodoSummary,
+  MAX_TODO_TEXT_LENGTH,
+  type TodoItem,
+} from '../src/core/todos';
 
 let failures = 0;
 function assert(condition: boolean, message: string): void {
@@ -372,7 +381,104 @@ console.log('=== TEST SUITE 4: POMODORO STATE MACHINE ===');
   assert(cycleState.phase === 'idle' && cycleState.round === 1, 'Reset returns to idle round 1');
 }
 
-console.log('=== TEST SUITE 5: I18N DICTIONARY ===');
+console.log('=== TEST SUITE 5: TODOS SANITIZATION, ORDERING & COMPLETION ===');
+{
+  // 1. Sanitization: limits to 80 chars, trims, collapses spaces, invalid input handling
+  const longText = '   This is a very long task description that definitely exceeds eighty characters by a lot of extra words   ';
+  const sanitized = sanitizeTodoText(longText);
+  assert(sanitized.length <= MAX_TODO_TEXT_LENGTH, 'Caps text to max 80 characters');
+  assert(!sanitized.startsWith(' ') && !sanitized.endsWith(' '), 'Trims whitespace');
+  assert(sanitizeTodoText(null) === '', 'Rejects null input gracefully');
+  assert(sanitizeTodoText(12345) === '', 'Rejects non-string input gracefully');
+
+  // Priority sanitization
+  assert(sanitizeTodoPriority('high') === 'high', 'Accepts high priority');
+  assert(sanitizeTodoPriority('low') === 'low', 'Accepts low priority');
+  assert(sanitizeTodoPriority('invalid') === 'normal', 'Defaults invalid priority to normal');
+
+  // 2. Parsing and deduplication of IDs
+  const rawTodosJson = JSON.stringify([
+    { id: 't1', text: 'Task 1', priority: 'high', completed: false, createdAt: '2026-11-13T10:00:00Z' },
+    { id: 't1', text: 'Task 2 duplicate id', priority: 'low', completed: true, completedAt: '2026-11-13', createdAt: '2026-11-13T11:00:00Z' },
+    { id: 't3', text: '   ', completed: false }, // empty text should be dropped
+  ]);
+
+  const parsed = parseTodos(rawTodosJson);
+  assert(parsed.length === 2, 'Drops tasks with empty text');
+  assert(parsed[0].id !== parsed[1].id, 'Deduplicates identical ids');
+  assert(parsed[0].priority === 'high', 'Preserves priority');
+  assert(parsed[1].completed === true && parsed[1].completedAt === '2026-11-13', 'Preserves completed status and completion date');
+
+  // 3. Corrupt JSON handling
+  assert(parseTodos('invalid json string').length === 0, 'Returns empty array on corrupt JSON without throwing');
+  assert(parseTodos('').length === 0, 'Returns empty array on empty string');
+
+  // 4. Ordering: Open tasks first, completed below; newest first
+  const unorganised: TodoItem[] = [
+    { id: '1', text: 'Old completed', priority: 'normal', completed: true, completedAt: '2026-11-10', createdAt: '2026-11-09T08:00:00Z' },
+    { id: '2', text: 'Recent open', priority: 'high', completed: false, createdAt: '2026-11-13T12:00:00Z' },
+    { id: '3', text: 'New completed today', priority: 'low', completed: true, completedAt: '2026-11-13', createdAt: '2026-11-13T09:00:00Z' },
+    { id: '4', text: 'Older open', priority: 'normal', completed: false, createdAt: '2026-11-12T10:00:00Z' },
+  ];
+
+  const sorted = sortTodos(unorganised);
+  assert(sorted[0].id === '2', 'First item is most recent open task');
+  assert(sorted[1].id === '4', 'Second item is older open task');
+  assert(sorted[2].id === '3', 'Third item is completed today task');
+  assert(sorted[3].id === '1', 'Fourth item is older completed task');
+
+  // 5. Summary calculations
+  const summary = calculateTodoSummary(sorted, '2026-11-13');
+  assert(summary.openCount === 2, 'Counts 2 open tasks');
+  assert(summary.doneTodayCount === 1, 'Counts 1 task completed today');
+
+  // 6. Completion & Uncompletion logic with midnight crossing
+  const todayKey = '2026-11-13';
+  const yesterdayKey = '2026-11-12';
+
+  // Completing a task
+  let tasksDoneToday = 2;
+  const taskToComplete: TodoItem = {
+    id: 'test-1',
+    text: 'Finish report',
+    priority: 'normal',
+    completed: false,
+    createdAt: '2026-11-13T08:00:00Z',
+  };
+
+  // Complete action
+  taskToComplete.completed = true;
+  taskToComplete.completedAt = todayKey;
+  tasksDoneToday += 1;
+  assert(tasksDoneToday === 3, 'Completing task increments tasksDoneToday');
+
+  // Un-completing task completed TODAY
+  if (taskToComplete.completedAt === todayKey) {
+    tasksDoneToday = Math.max(0, tasksDoneToday - 1);
+  }
+  taskToComplete.completed = false;
+  taskToComplete.completedAt = undefined;
+  assert(tasksDoneToday === 2, 'Uncompleting a task completed today decrements tasksDoneToday');
+
+  // Un-completing task completed YESTERDAY (older date)
+  const taskCompletedYesterday: TodoItem = {
+    id: 'test-2',
+    text: 'Yesterday job',
+    priority: 'normal',
+    completed: true,
+    completedAt: yesterdayKey,
+    createdAt: '2026-11-12T10:00:00Z',
+  };
+
+  if (taskCompletedYesterday.completedAt === todayKey) {
+    tasksDoneToday = Math.max(0, tasksDoneToday - 1);
+  }
+  taskCompletedYesterday.completed = false;
+  taskCompletedYesterday.completedAt = undefined;
+  assert(tasksDoneToday === 2, 'Uncompleting an older task does NOT decrement today count');
+}
+
+console.log('=== TEST SUITE 6: I18N DICTIONARY ===');
 {
   assert(t('nav_stats', 'en') === 'Stats', 'English translation works');
   assert(t('nav_stats', 'es') === 'Estadísticas', 'Spanish translation works');

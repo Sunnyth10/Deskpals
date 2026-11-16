@@ -10,6 +10,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Navigation
     nav_stats: 'Stats',
     nav_pet: 'Pet',
+    nav_todo: 'Todo',
     nav_reminders: 'Reminders',
     nav_settings: 'Settings',
 
@@ -39,6 +40,20 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pet_webhero: 'Web Hero',
     pet_selected: 'Active',
     pet_select_btn: 'Select',
+
+    // Todo Tab
+    todo_title: 'Tasks & Todos',
+    todo_placeholder: 'Add a new task (e.g. Write report, Review PR)...',
+    todo_add_btn: 'Add Task',
+    todo_priority_low: 'Low',
+    todo_priority_normal: 'Normal',
+    todo_priority_high: 'High',
+    todo_open: 'open',
+    todo_done_today: 'done today',
+    todo_empty: 'No tasks yet. Add one above to get started!',
+    todo_completed_header: 'Completed',
+    todo_clear_completed: 'Clear completed',
+    todo_bubble_done: 'Nice! Task done.',
 
     // Reminders Tab
     reminders_title: 'Daily Reminders',
@@ -110,6 +125,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Navigation
     nav_stats: 'Estadísticas',
     nav_pet: 'Mascota',
+    nav_todo: 'Tareas',
     nav_reminders: 'Recordatorios',
     nav_settings: 'Ajustes',
 
@@ -139,6 +155,20 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pet_webhero: 'Héroe',
     pet_selected: 'Activo',
     pet_select_btn: 'Seleccionar',
+
+    // Todo Tab
+    todo_title: 'Tareas y Pendientes',
+    todo_placeholder: 'Añadir nueva tarea (ej. Escribir informe)...',
+    todo_add_btn: 'Añadir Tarea',
+    todo_priority_low: 'Baja',
+    todo_priority_normal: 'Normal',
+    todo_priority_high: 'Alta',
+    todo_open: 'pendientes',
+    todo_done_today: 'completadas hoy',
+    todo_empty: '¡No hay tareas aún! Añade una arriba.',
+    todo_completed_header: 'Completadas',
+    todo_clear_completed: 'Borrar completadas',
+    todo_bubble_done: '¡Genial! Tarea completada.',
 
     // Reminders Tab
     reminders_title: 'Recordatorios Diarios',

@@ -58,6 +58,15 @@ import {
   type PomodoroState,
   type PomodoroStatus,
 } from '../core/pomodoro';
+import {
+  parseTodos,
+  sortTodos,
+  sanitizeTodoText,
+  sanitizeTodoPriority,
+  MAX_TODOS_COUNT,
+  type TodoItem,
+  type TodoPriority,
+} from '../core/todos';
 import { IPC_CHANNELS, type FocusStatus, type SpeechBubbleMessage, type CountdownPayload } from '../shared/ipc-channels';
 import { t } from '../core/i18n';
 
@@ -84,6 +93,7 @@ let settings: Settings = { ...DEFAULT_SETTINGS };
 let pomodoroState: PomodoroState = createInitialPomodoroState(DEFAULT_SETTINGS.pomodoro);
 const settingsFile = (): string => path.join(app.getPath('userData'), 'settings.json');
 const statsFile = (): string => path.join(app.getPath('userData'), 'stats.json');
+const todosFile = (): string => path.join(app.getPath('userData'), 'todos.json');
 const logFile = (): string => path.join(app.getPath('userData'), 'logs', 'main.log');
 
 function logError(message: string, error?: unknown): void {
@@ -174,6 +184,54 @@ function saveStats(): void {
       /* best effort */
     }
     logError('could not save stats', error);
+  }
+}
+
+/* --------------------------------- todo store --------------------------------- */
+
+let todosCache: TodoItem[] = [];
+
+function loadTodos(): void {
+  const file = todosFile();
+  if (!fs.existsSync(file)) {
+    todosCache = [];
+    return;
+  }
+  try {
+    const raw = fs.readFileSync(file, 'utf8');
+    todosCache = parseTodos(raw);
+  } catch (error) {
+    logError('could not load todos; quarantining corrupt file', error);
+    try {
+      const corruptFile = path.join(app.getPath('userData'), `todos.corrupt.${Date.now()}.json`);
+      fs.renameSync(file, corruptFile);
+    } catch {
+      /* best effort */
+    }
+    todosCache = [];
+  }
+}
+
+function saveTodos(): void {
+  const file = todosFile();
+  const temp = `${file}.${process.pid}.tmp`;
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(temp, JSON.stringify(todosCache, null, 2));
+    fs.renameSync(temp, file);
+  } catch (error) {
+    try {
+      fs.rmSync(temp, { force: true });
+    } catch {
+      /* best effort */
+    }
+    logError('could not save todos', error);
+  }
+}
+
+function broadcastTodosUpdated(): void {
+  if (dashboardWin && !dashboardWin.isDestroyed()) {
+    dashboardWin.webContents.send(IPC_CHANNELS.TODOS_UPDATED);
   }
 }
 
@@ -911,6 +969,93 @@ ipcMain.handle(IPC_CHANNELS.POMODORO_PAUSE, () => handlePausePomodoro());
 ipcMain.handle(IPC_CHANNELS.POMODORO_SKIP, () => handleSkipPomodoro());
 ipcMain.handle(IPC_CHANNELS.POMODORO_RESET, () => handleResetPomodoro());
 
+// Todos IPC Handlers
+ipcMain.handle(IPC_CHANNELS.TODOS_GET, () => {
+  return sortTodos(todosCache);
+});
+
+ipcMain.handle(IPC_CHANNELS.TODOS_ADD, (_e, payload: { text: string; priority?: TodoPriority }) => {
+  const text = sanitizeTodoText(payload.text);
+  if (!text) return sortTodos(todosCache);
+
+  if (todosCache.length >= MAX_TODOS_COUNT) {
+    return sortTodos(todosCache);
+  }
+
+  const newItem: TodoItem = {
+    id: `todo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    text,
+    priority: sanitizeTodoPriority(payload.priority),
+    completed: false,
+    createdAt: new Date().toISOString(),
+  };
+
+  todosCache.push(newItem);
+  saveTodos();
+  broadcastTodosUpdated();
+  return sortTodos(todosCache);
+});
+
+ipcMain.handle(IPC_CHANNELS.TODOS_UPDATE, (_e, payload: { id: string; text: string }) => {
+  if (typeof payload.id !== 'string') return sortTodos(todosCache);
+  const text = sanitizeTodoText(payload.text);
+  if (!text) return sortTodos(todosCache);
+
+  const item = todosCache.find((t) => t.id === payload.id);
+  if (item) {
+    item.text = text;
+    saveTodos();
+    broadcastTodosUpdated();
+  }
+  return sortTodos(todosCache);
+});
+
+ipcMain.handle(IPC_CHANNELS.TODOS_TOGGLE, (_e, id: string) => {
+  if (typeof id !== 'string') return sortTodos(todosCache);
+  const item = todosCache.find((t) => t.id === id);
+  if (!item) return sortTodos(todosCache);
+
+  const todayKey = formatDateKey(new Date());
+
+  if (!item.completed) {
+    item.completed = true;
+    item.completedAt = todayKey;
+    recordStat('tasksDone', 1);
+
+    showCompanionBubble({
+      id: `todo-done-${Date.now()}`,
+      text: t('todo_bubble_done', settings.language),
+      kind: 'info',
+      durationSeconds: 5,
+    });
+  } else {
+    if (item.completedAt === todayKey) {
+      recordStat('tasksDone', -1);
+    }
+    item.completed = false;
+    item.completedAt = undefined;
+  }
+
+  saveTodos();
+  broadcastTodosUpdated();
+  return sortTodos(todosCache);
+});
+
+ipcMain.handle(IPC_CHANNELS.TODOS_DELETE, (_e, id: string) => {
+  if (typeof id !== 'string') return sortTodos(todosCache);
+  todosCache = todosCache.filter((t) => t.id !== id);
+  saveTodos();
+  broadcastTodosUpdated();
+  return sortTodos(todosCache);
+});
+
+ipcMain.handle(IPC_CHANNELS.TODOS_CLEAR_COMPLETED, () => {
+  todosCache = todosCache.filter((t) => !t.completed);
+  saveTodos();
+  broadcastTodosUpdated();
+  return sortTodos(todosCache);
+});
+
 ipcMain.handle(IPC_CHANNELS.APP_GET_ACTIVE_APP, () => {
   return currentForegroundAppInfo().name;
 });
@@ -1015,6 +1160,7 @@ function startWindowsFullscreenWatcher(): void {
 app.whenReady().then(() => {
   loadSettings();
   loadStats();
+  loadTodos();
   createOverlay();
 
   const icon = nativeImage

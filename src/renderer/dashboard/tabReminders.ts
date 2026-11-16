@@ -205,25 +205,33 @@ export function renderRemindersTab(container: HTMLElement, settings: Settings): 
       enlargeCol.appendChild(enlargeLabel);
       controlsRow.appendChild(enlargeCol);
 
-      // 4. Show Before Slider
+      // 4. Show Before Slider ("roller")
       const sliderCol = document.createElement('div');
       sliderCol.style.display = 'flex';
-      sliderCol.style.alignItems = 'center';
-      sliderCol.style.gap = '8px';
+      sliderCol.style.flexDirection = 'column';
+      sliderCol.style.gap = '6px';
+      sliderCol.style.gridColumn = 'span 2';
+
       const sliderLabel = document.createElement('span');
       sliderLabel.innerText = t('reminders_show_before', lang) + ':';
       sliderLabel.style.fontSize = '12px';
       sliderLabel.style.color = 'var(--text-muted)';
+
       const slider = createSlider({
         value: reminder.showBeforeMinutes,
         min: 1,
         max: 60,
         step: 1,
         unit: 'min',
+        presets: [5, 10, 15, 30],
+        onInput: (val) => {
+          reminder.showBeforeMinutes = val;
+          liveLine.innerText = formatLiveNext(reminder);
+        },
         onChange: async (val) => {
           reminder.showBeforeMinutes = val;
+          liveLine.innerText = formatLiveNext(reminder);
           remindersList = await window.deskpals.saveReminder(reminder);
-          renderList();
         },
       });
       sliderCol.appendChild(sliderLabel);

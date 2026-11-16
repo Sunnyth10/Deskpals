@@ -33,8 +33,8 @@ import {
   type Settings,
 } from '../core/settings';
 import {
-  calculateNextOccurrence,
   isCountdownActive,
+  isReminderDue,
   type ReminderItem,
 } from '../core/reminders';
 import {
@@ -599,48 +599,64 @@ function checkSchedulerTicker(): void {
   for (const reminder of settings.reminders) {
     if (!reminder.enabled) continue;
 
-    const nextDate = calculateNextOccurrence(reminder.time, now);
-    const msUntil = nextDate.getTime() - now.getTime();
-    const minsUntil = Math.ceil(msUntil / (60 * 1000));
+    const fireKey = `${currentDateKey}_${reminder.id}_${reminder.time}`;
+    const alreadyFired = firedRemindersToday.has(fireKey);
 
-    // Pet countdown check
-    const countdown = isCountdownActive(reminder, now);
-    if (countdown.active && !activeCountdownPayload) {
-      activeCountdownPayload = {
-        taskName: reminder.task,
-        minutesLeft: countdown.minutesLeft,
-        formattedTime: reminder.time,
-        targetTimestamp: countdown.nextDate.getTime(),
-      };
+    // 1. Due check: fires when scheduled time has arrived (never early)
+    if (isReminderDue(reminder, now, alreadyFired)) {
+      firedRemindersToday.add(fireKey);
+
+      // Show alert bubble on companion
+      showCompanionBubble({
+        id: `alert-${reminder.id}`,
+        text: reminder.task,
+        kind: 'alert',
+        durationSeconds: settings.appearance.bubbleDurationSeconds,
+        subtext: `Scheduled for ${reminder.time}`,
+      });
+
+      // Optional enlargement
+      if (reminder.enlargeOnAlert) {
+        triggerCompanionEnlarge(1.6, 4.0);
+      }
+
+      // Native notification fallback
+      if (Notification.isSupported()) {
+        new Notification({
+          title: 'DeskPals Reminder',
+          body: reminder.task,
+          silent: false,
+        }).show();
+      }
+    } else if (!alreadyFired) {
+      // If reminder was scheduled in the past today by more than 60s (e.g. app launched late),
+      // mark it fired so it does not fire stale notifications or show a countdown for the past.
+      const [hStr, mStr] = reminder.time.split(':');
+      const targetHour = parseInt(hStr, 10);
+      const targetMinute = parseInt(mStr, 10);
+      if (!isNaN(targetHour) && !isNaN(targetMinute)) {
+        const todayTarget = new Date(now);
+        todayTarget.setHours(targetHour, targetMinute, 0, 0);
+        if (now.getTime() - todayTarget.getTime() > 60000) {
+          firedRemindersToday.add(fireKey);
+        }
+      }
     }
 
-    // Due check: within 0 to 45 seconds of scheduled time
-    const fireKey = `${currentDateKey}_${reminder.id}_${reminder.time}`;
-    if (minsUntil === 0 || (msUntil >= 0 && msUntil <= 45000)) {
-      if (!firedRemindersToday.has(fireKey)) {
-        firedRemindersToday.add(fireKey);
-
-        // Show bubble on companion
-        showCompanionBubble({
-          id: `alert-${reminder.id}`,
-          text: reminder.task,
-          kind: 'alert',
-          durationSeconds: settings.appearance.bubbleDurationSeconds,
-          subtext: `Scheduled for ${reminder.time}`,
-        });
-
-        // Optional enlargement
-        if (reminder.enlargeOnAlert) {
-          triggerCompanionEnlarge(1.6, 4.0);
-        }
-
-        // Native notification fallback
-        if (Notification.isSupported()) {
-          new Notification({
-            title: 'DeskPals Reminder',
-            body: reminder.task,
-            silent: false,
-          }).show();
+    // 2. Pet countdown check: only if petCountdown is enabled and not already fired today
+    const countdown = isCountdownActive(reminder, now, firedRemindersToday.has(fireKey));
+    if (countdown.active) {
+      const msUntilTarget = countdown.nextDate.getTime() - now.getTime();
+      // Only show countdown if target is strictly in the future
+      if (msUntilTarget > 0) {
+        const currentTarget = activeCountdownPayload?.targetTimestamp;
+        if (!activeCountdownPayload || (currentTarget !== undefined && msUntilTarget < (currentTarget - now.getTime()))) {
+          activeCountdownPayload = {
+            taskName: reminder.task,
+            minutesLeft: countdown.minutesLeft,
+            formattedTime: reminder.time,
+            targetTimestamp: countdown.nextDate.getTime(),
+          };
         }
       }
     }
@@ -1183,7 +1199,7 @@ app.whenReady().then(() => {
   if (process.platform === 'win32') startWindowsFullscreenWatcher();
 
   // Active timers
-  setInterval(checkSchedulerTicker, 10000); // Check reminders every 10s
+  setInterval(checkSchedulerTicker, 1000); // Check reminders every second for second-level accuracy
   setInterval(minuteTicker, 60000); // Check focus countdown every 1m
   setInterval(tickPomodoroEngine, 1000); // Pomodoro engine ticker every 1s
   setInterval(checkDistractions, 4000); // Check distraction poller during focus

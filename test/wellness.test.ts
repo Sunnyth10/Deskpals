@@ -12,6 +12,7 @@ import {
   calculateNextOccurrence,
   getMinutesUntil,
   isCountdownActive,
+  isReminderDue,
   formatTime12,
   formatLiveNext,
   type ReminderItem,
@@ -116,6 +117,26 @@ console.log('=== TEST SUITE 1: REMINDER SCHEDULING & MIDNIGHT ROLLOVER ===');
   assert(formatTime12('14:05') === '02:05 PM', 'Formats 14:05 to 02:05 PM');
   assert(formatTime12('00:30') === '12:30 AM', 'Formats 00:30 to 12:30 AM');
   assert(formatLiveNext(reminder, now) === 'Next: 02:00 PM (15min)', 'Formats live next text accurately');
+
+  // Reminder due checks (never fire early, fire at 00:00)
+  const exactDue = new Date('2026-11-13T14:00:00');
+  const early45s = new Date('2026-11-13T13:59:15'); // 45 seconds early
+  const early1s = new Date('2026-11-13T13:59:59');  // 1 second early
+  const late30s = new Date('2026-11-13T14:00:30');  // 30 seconds into due window
+  const stale5m = new Date('2026-11-13T14:05:00');  // 5 minutes late
+
+  assert(isReminderDue(reminder, early45s, false) === false, 'Never fires 45 seconds early');
+  assert(isReminderDue(reminder, early1s, false) === false, 'Never fires 1 second early');
+  assert(isReminderDue(reminder, exactDue, false) === true, 'Fires at exact scheduled second (00:00)');
+  assert(isReminderDue(reminder, late30s, false) === true, 'Fires within 60s window if not already fired');
+  assert(isReminderDue(reminder, exactDue, true) === false, 'Does not fire if already fired today');
+  assert(isReminderDue(reminder, stale5m, false) === false, 'Does not fire stale notifications (>60s)');
+
+  // Countdown stays active up to the final second, but becomes inactive once fired
+  const countBefore1s = isCountdownActive(reminder, early1s, false);
+  assert(countBefore1s.active === true, 'Countdown stays active 1 second before scheduled time');
+  assert(countBefore1s.minutesLeft === 1, 'Minutes left is 1 at 1 second before');
+  assert(isCountdownActive(reminder, exactDue, true).active === false, 'Countdown stops once fired today');
 }
 
 console.log('=== TEST SUITE 2: STATS AGGREGATION & HEATMAP GRID ===');

@@ -95,8 +95,12 @@ export class SpeechBubbleManager {
 
     // Render Countdown pill if active and no priority modal bubble
     if (this.countdown && !this.active) {
-      this.renderCountdownPill(ctx, anchorX, anchorY, this.countdown, bounds);
-      return;
+      if (this.countdown.targetTimestamp && Date.now() >= this.countdown.targetTimestamp + 1000) {
+        // Countdown has elapsed; yield so the alert bubble displays cleanly at 00
+      } else {
+        this.renderCountdownPill(ctx, anchorX, anchorY, this.countdown, bounds);
+        return;
+      }
     }
 
     if (!this.active || this.active.alpha <= 0) return;

@@ -53,14 +53,43 @@ export function getMinutesUntil(targetDate: Date, fromDate: Date = new Date()): 
 }
 
 /**
+ * Evaluates whether a reminder should fire at `now`.
+ * A reminder fires if:
+ * 1. It is enabled.
+ * 2. It has not already fired today.
+ * 3. The current time has reached or passed its scheduled time today.
+ * 4. The current time is within maxElapsedMs (default 60s) of the scheduled time.
+ */
+export function isReminderDue(
+  reminder: ReminderItem,
+  now: Date = new Date(),
+  alreadyFiredToday = false,
+  maxElapsedMs = 60000
+): boolean {
+  if (!reminder.enabled || alreadyFiredToday) return false;
+
+  const [hStr, mStr] = reminder.time.split(':');
+  const targetHour = parseInt(hStr, 10);
+  const targetMinute = parseInt(mStr, 10);
+  if (isNaN(targetHour) || isNaN(targetMinute)) return false;
+
+  const todayTarget = new Date(now);
+  todayTarget.setHours(targetHour, targetMinute, 0, 0);
+
+  const diffMs = now.getTime() - todayTarget.getTime();
+  return diffMs >= 0 && diffMs <= maxElapsedMs;
+}
+
+/**
  * Checks if a reminder's pet countdown should be displayed right now.
  * Active when: reminder is enabled, petCountdown is true, and minutes remaining <= showBeforeMinutes.
  */
 export function isCountdownActive(
   reminder: ReminderItem,
-  fromDate: Date = new Date()
+  fromDate: Date = new Date(),
+  alreadyFiredToday = false
 ): { active: boolean; minutesLeft: number; nextDate: Date } {
-  if (!reminder.enabled || !reminder.petCountdown) {
+  if (!reminder.enabled || !reminder.petCountdown || alreadyFiredToday) {
     return { active: false, minutesLeft: 0, nextDate: new Date() };
   }
 

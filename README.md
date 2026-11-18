@@ -13,9 +13,9 @@
 <p align="center"><strong>Tiny animated companions that live on top of everything you do.</strong> Watch YouTube. Chat on WhatsApp. Write code. A cat, a fox, a robot, a web-slinging hero or a ghost hangs out right there with you.</p>
 
 <p align="center">
-  <img alt="Platform: macOS and Windows" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-blueviolet?style=for-the-badge">
+  <img alt="Version: 1.1.0" src="https://img.shields.io/badge/version-1.1.0-blueviolet?style=for-the-badge">
+  <img alt="Platform: macOS and Windows" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-blue?style=for-the-badge">
   <img alt="5 companions" src="https://img.shields.io/badge/companions-5-ff69b4?style=for-the-badge">
-  <img alt="Status: alpha" src="https://img.shields.io/badge/status-alpha-orange?style=for-the-badge">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge">
   <img alt="Vibes: immaculate" src="https://img.shields.io/badge/vibes-immaculate-yellow?style=for-the-badge">
 </p>
@@ -160,13 +160,14 @@ There are **5 companions** in the current release.
 ## 🚀 Features
 
 ### Wellness & Productivity Dashboard
-- 📊 **Stats Dashboard**: 4 seven-day sparkline cards (Pomodoros, Tasks done, Focus minutes, Distractions) with "vs yesterday" comparison chips, "Companion Days" tracker, Focus Streak badge, and a 52-week GitHub-style contribution heatmap.
+- 📊 **Stats Dashboard**: 4 seven-day sparkline cards (Pomodoros, Tasks done, Focus minutes, Distractions) with "vs yesterday" comparison chips, formatted metric units, "Companion Days" tracker, Focus Streak badge, and a 52-week GitHub-style contribution heatmap.
 - 🍅 **Pomodoro Timer Engine**: Deterministic timestamp-based main-process Pomodoro state machine (Work, Short Break, Long Break after N rounds) with live countdown display, Stats tab controls, and speech bubble celebrations.
-- 📝 **Todo Tab**: Full task management with priority levels (Low, Normal, High), inline editing, atomic persistence in `todos.json`, daily completion tracking, and collapsible completed view.
+- 📝 **Todo Tab**: Full task management with interactive priority badges (`🔥 High`, `● Normal`, `↓ Low`) featuring 1-click cycling, segmented filter tabs (`All`, `Active`, `Completed`) with live counters, inline editing, and atomic persistence in `todos.json`.
+- ⏰ **Smart Reminders**: Daily recurring tasks with live ticking countdowns, speech bubble alerts, companion enlargement, and an ultra-smooth show-before time roller with dynamic gradient fill and quick preset pills (`5m`, `10m`, `15m`, `30m`).
 - 🐱 **Pet Selector & Previews**: Live animated canvas previews of all 5 companions with individual per-companion scale adjustment.
-- ⏰ **Smart Reminders**: Daily recurring tasks with live ticking countdowns, speech bubble alerts, companion enlargement, and native system notification fallbacks.
 - 🎯 **Focus Sessions & Distraction Shield**: Deep work timer with active window distraction detection against custom blocked apps and keywords.
-- 🌐 **Internationalization**: Localized across English (`en`), Spanish (`es`), and Hindi (`hi`).
+- 🌐 **Internationalization**: Fully localized across English (`en`), Spanish (`es`), and Hindi (`hi`).
+- ⚡ **Seamless Focus Integration**: Intelligent window layering and non-intrusive focus management so your companion and dashboard never interrupt your active work.
 
 ### Core
 - 🪟 **Transparent always-on-top overlay.** Companions float above all apps.
@@ -260,15 +261,15 @@ There are **5 companions** in the current release.
 [![GitHub release](https://img.shields.io/github/v/release/Sunnyth10/Deskpals?label=latest&style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
 [![GitHub downloads](https://img.shields.io/github/downloads/Sunnyth10/Deskpals/total?style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.4/DeskPals-mac-arm64.dmg">
+<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-arm64.dmg">
   <img alt="Download for macOS Apple Silicon" src="https://img.shields.io/badge/Download-macOS%20Apple%20Silicon-black?style=for-the-badge&logo=apple">
 </a>
 &nbsp;
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.4/DeskPals-mac-x64.dmg">
+<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-x64.dmg">
   <img alt="Download for macOS Intel" src="https://img.shields.io/badge/Download-macOS%20Intel-555555?style=for-the-badge&logo=apple">
 </a>
 &nbsp;
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.0.4/DeskPals-win-x64.exe">
+<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-win-x64.exe">
   <img alt="Download for Windows" src="https://img.shields.io/badge/Download-Windows%20x64-0078d4?style=for-the-badge&logo=windows">
 </a>
 
@@ -701,13 +702,14 @@ GitHub Actions builds on `macos-latest` and `windows-latest` runners. Pushing a 
 
 ## ⚙️ Configuration reference
 
-Settings and wellness stats are stored locally in JSON format with automatic schema migration and fallback defaults.
+Settings, wellness stats, and todos are stored locally in JSON format with automatic schema migration, atomic writes, and fallback defaults.
 
-| OS | Settings File | Stats History File |
-|----|---------------|-------------------|
-| macOS | `~/Library/Application Support/DeskPals/settings.json` | `~/Library/Application Support/DeskPals/stats.json` |
-| Windows | `%APPDATA%\DeskPals\settings.json` | `%APPDATA%\DeskPals\stats.json` |
+| OS | Settings File | Stats History File | Todos File |
+|----|---------------|-------------------|------------|
+| macOS | `~/Library/Application Support/DeskPals/settings.json` | `~/Library/Application Support/DeskPals/stats.json` | `~/Library/Application Support/DeskPals/todos.json` |
+| Windows | `%APPDATA%\DeskPals\settings.json` | `%APPDATA%\DeskPals\stats.json` | `%APPDATA%\DeskPals\todos.json` |
 
+#### `settings.json`
 ```json
 {
   "companion": "cat",
@@ -758,6 +760,19 @@ Settings and wellness stats are stored locally in JSON format with automatic sch
   ],
   "firstLaunchDate": "2026-11-01"
 }
+```
+
+#### `todos.json`
+```json
+[
+  {
+    "id": "1731500000000",
+    "text": "Review pull request",
+    "completed": false,
+    "priority": "high",
+    "createdAt": "2026-11-18T10:00:00.000Z"
+  }
+]
 ```
 
 ---
@@ -864,6 +879,8 @@ Yes. See [Adding a new companion](#-adding-a-new-companion).
 - [x] Ghost 👻
 - [x] macOS support
 - [x] Windows support
+- [x] Wellness & Productivity Dashboard (Pomodoro, Todo List, Reminders, Activity Heatmap)
+- [x] Multi-language localization (English, Spanish, Hindi)
 - [ ] Linux support (X11 and Wayland)
 - [ ] Companions interacting with each other (chase, play, share a nap)
 - [ ] Sit on window title bars and climb window edges

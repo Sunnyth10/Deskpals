@@ -160,6 +160,11 @@ There are **5 companions** in the current release.
 ## 🚀 Features
 
 ### Wellness & Productivity Dashboard
+
+<p align="center">
+  <img src="docs/images/dashboard.png" width="800" alt="DeskPals Wellness & Productivity Dashboard">
+</p>
+
 - 📊 **Stats Dashboard**: 4 seven-day sparkline cards (Pomodoros, Tasks done, Focus minutes, Distractions) with "vs yesterday" comparison chips, formatted metric units, "Companion Days" tracker, Focus Streak badge, and a 52-week GitHub-style contribution heatmap.
 - 🍅 **Pomodoro Timer Engine**: Deterministic timestamp-based main-process Pomodoro state machine (Work, Short Break, Long Break after N rounds) with live countdown display, Stats tab controls, and speech bubble celebrations.
 - 📝 **Todo Tab**: Full task management with interactive priority badges (`🔥 High`, `● Normal`, `↓ Low`) featuring 1-click cycling, segmented filter tabs (`All`, `Active`, `Completed`) with live counters, inline editing, and atomic persistence in `todos.json`.

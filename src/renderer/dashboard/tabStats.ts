@@ -191,21 +191,28 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
     header.style.display = 'flex';
     header.style.justifyContent = 'space-between';
     header.style.alignItems = 'center';
+    header.style.gap = '6px';
 
     const titleWrap = document.createElement('div');
     titleWrap.style.display = 'flex';
     titleWrap.style.alignItems = 'center';
     titleWrap.style.gap = '6px';
+    titleWrap.style.minWidth = '0';
+    titleWrap.style.flex = '1';
 
     const iconEl = document.createElement('span');
     iconEl.innerText = m.icon;
     iconEl.style.fontSize = '14px';
+    iconEl.style.flexShrink = '0';
 
     const titleEl = document.createElement('span');
     titleEl.innerText = m.title;
     titleEl.style.fontSize = '12px';
     titleEl.style.color = 'var(--text-muted)';
     titleEl.style.fontWeight = '600';
+    titleEl.style.whiteSpace = 'nowrap';
+    titleEl.style.overflow = 'hidden';
+    titleEl.style.textOverflow = 'ellipsis';
 
     titleWrap.appendChild(iconEl);
     titleWrap.appendChild(titleEl);
@@ -220,6 +227,9 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
     chip.style.borderRadius = '10px';
     chip.style.color = vsYest.color;
     chip.style.background = vsYest.bg;
+    chip.style.whiteSpace = 'nowrap';
+    chip.style.flexShrink = '0';
+    chip.style.lineHeight = '1.3';
 
     header.appendChild(titleWrap);
     header.appendChild(chip);
@@ -227,7 +237,11 @@ export async function renderStatsTab(container: HTMLElement, settings: Settings)
 
     // Large Today count
     const todayEl = document.createElement('div');
-    todayEl.innerText = m.unit ? `${m.today} ${m.unit}` : `${m.today}`;
+    if (m.unit) {
+      todayEl.innerHTML = `${m.today}<span style="font-size:14px; font-weight:600; color:var(--text-muted); margin-left:3px;">${m.unit}</span>`;
+    } else {
+      todayEl.innerText = String(m.today);
+    }
     todayEl.style.fontSize = '26px';
     todayEl.style.fontWeight = '800';
     todayEl.style.color = m.color;

@@ -22,8 +22,6 @@
 
 <p align="center">🐱 &nbsp; 🦊 &nbsp; 🤖 &nbsp; 🕸️ &nbsp; 👻</p>
 
-> **Heads up:** "DeskPals" is a placeholder name. Rename it however you like (search and replace `DeskPals` across the repo). Anything marked `TODO` or inside `<angle brackets>` is meant for you to fill in.
-
 ---
 
 ## 📖 Table of Contents

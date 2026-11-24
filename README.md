@@ -13,11 +13,11 @@
 <p align="center"><strong>Tiny animated companions that live on top of everything you do.</strong> Watch YouTube. Chat on WhatsApp. Write code. A cat, a fox, a robot, a web-slinging hero or a ghost hangs out right there with you.</p>
 
 <p align="center">
-  <img alt="Version: 1.1.0" src="https://img.shields.io/badge/version-1.1.0-blueviolet?style=for-the-badge">
-  <img alt="Platform: macOS and Windows" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-blue?style=for-the-badge">
-  <img alt="5 companions" src="https://img.shields.io/badge/companions-5-ff69b4?style=for-the-badge">
-  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge">
-  <img alt="Vibes: immaculate" src="https://img.shields.io/badge/vibes-immaculate-yellow?style=for-the-badge">
+  <a href="https://github.com/Sunnyth10/Deskpals/releases/tag/v1.1.0"><img alt="Version: 1.1.0" src="https://img.shields.io/badge/version-1.1.0-8A2BE2.svg?style=flat-square"></a>
+  <a href="https://desktop-pals-two.vercel.app"><img alt="Live Website" src="https://img.shields.io/badge/website-live-00C7B7.svg?style=flat-square&logo=vercel"></a>
+  <a href="#️-download-deskpals"><img alt="Platform: macOS and Windows" src="https://img.shields.io/badge/platform-macOS_%7C_Windows-007ACC.svg?style=flat-square"></a>
+  <a href="#-meet-the-companions"><img alt="5 companions" src="https://img.shields.io/badge/companions-5_active-FF69B4.svg?style=flat-square"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2ea44f.svg?style=flat-square"></a>
 </p>
 
 <p align="center">🐱 &nbsp; 🦊 &nbsp; 🤖 &nbsp; 🕸️ &nbsp; 👻</p>
@@ -68,21 +68,36 @@ You can click them, drag them, pet them, ignore them, or let them wander. They r
 
 ---
 
-<div align="center">
-
 ## ⬇️ Download DeskPals
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-arm64.dmg">
-  <img src="https://img.shields.io/badge/Download-macOS%20Apple%20Silicon%20(.dmg)-black?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS Apple Silicon" height="50">
-</a>
+<div align="center">
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-x64.dmg">
-  <img src="https://img.shields.io/badge/Download-macOS%20Intel%20(.dmg)-555555?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS Intel" height="50">
-</a>
+> 🌐 **Official Live Website**: [**https://desktop-pals-two.vercel.app**](https://desktop-pals-two.vercel.app)  
+> *Try the interactive web demo, test all companions live in your browser, and download directly from the web!*
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-win-x64.exe">
-  <img src="https://img.shields.io/badge/Download-Windows%20x64%20(.exe)-0078d4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows" height="50">
-</a>
+<br>
+
+| Platform | Architecture | Package | File Size | Direct Download |
+| :--- | :--- | :--- | :--- | :--- |
+| 🍏 **macOS** | **Apple Silicon** (M1/M2/M3/M4) | `.dmg` | ~88 MB | [**Download for Apple Silicon (.dmg)**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-arm64.dmg) |
+| 🍏 **macOS** | **Intel Mac** (x64) | `.dmg` | ~91 MB | [**Download for Intel Mac (.dmg)**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-x64.dmg) |
+| 🪟 **Windows** | **Windows 10 / 11** (64-bit) | `.exe` | ~84 MB | [**Download for Windows (.exe)**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-win-x64.exe) |
+
+<br>
+
+<p align="center">
+  <a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-arm64.dmg">
+    <img src="https://img.shields.io/badge/Download-Apple_Silicon-black.svg?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS Apple Silicon">
+  </a>
+  &nbsp;
+  <a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-x64.dmg">
+    <img src="https://img.shields.io/badge/Download-Intel_Mac-555555.svg?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS Intel">
+  </a>
+  &nbsp;
+  <a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-win-x64.exe">
+    <img src="https://img.shields.io/badge/Download-Windows_x64-0078d4.svg?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows">
+  </a>
+</p>
 
 </div>
 
@@ -261,21 +276,19 @@ There are **5 companions** in the current release.
 
 <div align="center">
 
-[![GitHub release](https://img.shields.io/github/v/release/Sunnyth10/Deskpals?label=latest&style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
-[![GitHub downloads](https://img.shields.io/github/downloads/Sunnyth10/Deskpals/total?style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
+[![GitHub release](https://img.shields.io/github/v/release/Sunnyth10/Deskpals.svg?label=latest&style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
+[![GitHub downloads](https://img.shields.io/github/downloads/Sunnyth10/Deskpals/total.svg?style=for-the-badge)](https://github.com/Sunnyth10/Deskpals/releases)
+[![Official Website](https://img.shields.io/badge/Official_Website-desktop--pals--two.vercel.app-00C7B7.svg?style=for-the-badge&logo=vercel)](https://desktop-pals-two.vercel.app)
 
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-arm64.dmg">
-  <img alt="Download for macOS Apple Silicon" src="https://img.shields.io/badge/Download-macOS%20Apple%20Silicon-black?style=for-the-badge&logo=apple">
-</a>
-&nbsp;
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-x64.dmg">
-  <img alt="Download for macOS Intel" src="https://img.shields.io/badge/Download-macOS%20Intel-555555?style=for-the-badge&logo=apple">
-</a>
-&nbsp;
-<a href="https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-win-x64.exe">
-  <img alt="Download for Windows" src="https://img.shields.io/badge/Download-Windows%20x64-0078d4?style=for-the-badge&logo=windows">
-</a>
+| Platform | Download Link | Installer Size |
+| :--- | :--- | :--- |
+| 🍏 **macOS Apple Silicon** | [**DeskPals-mac-arm64.dmg**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-arm64.dmg) | ~88 MB |
+| 🍏 **macOS Intel** | [**DeskPals-mac-x64.dmg**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-x64.dmg) | ~91 MB |
+| 🪟 **Windows x64** | [**DeskPals-win-x64.exe**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-win-x64.exe) | ~84 MB |
 
+<br>
+
+🌐 Prefer downloading from the web? Visit **[desktop-pals-two.vercel.app](https://desktop-pals-two.vercel.app)**.  
 Browse all releases → [github.com/Sunnyth10/Deskpals/releases](https://github.com/Sunnyth10/Deskpals/releases)
 
 </div>

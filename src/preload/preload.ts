@@ -7,6 +7,7 @@ export interface OverlayApi {
   setInteractive(interactive: boolean): void;
   setGrabbed(grabbed: boolean): void;
   openMenu(): void;
+  openDashboard(tab?: string): void;
   telemetry(data: unknown): void;
   frameError(message: string): void;
   debugLog(message: string): void;
@@ -26,6 +27,7 @@ const api: OverlayApi = {
   setInteractive: (interactive) => ipcRenderer.send(IPC_CHANNELS.OVERLAY_INTERACTIVE, interactive),
   setGrabbed: (grabbed) => ipcRenderer.send(IPC_CHANNELS.OVERLAY_GRAB, grabbed),
   openMenu: () => ipcRenderer.send(IPC_CHANNELS.OVERLAY_MENU),
+  openDashboard: (tab) => ipcRenderer.send(IPC_CHANNELS.DASHBOARD_OPEN, tab),
   telemetry: (data) => ipcRenderer.send('overlay:telemetry', data),
   frameError: (message) => ipcRenderer.send('overlay:frame-error', message),
   debugLog: (message) => ipcRenderer.send('overlay:debug-log', message),

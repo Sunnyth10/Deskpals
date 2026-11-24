@@ -251,6 +251,18 @@ export class Stage {
     return out;
   }
 
+  public bubbleContainsPoint(x: number, y: number): boolean {
+    return this.bubbleManager.containsPoint(x, y);
+  }
+
+  public getActiveBubble(): import('./SpeechBubble').ActiveBubble | null {
+    return this.bubbleManager.getActiveBubble();
+  }
+
+  public dismissBubble(): void {
+    this.bubbleManager.dismiss();
+  }
+
   public dispose(): void {
     for (const e of this.entries) { e.c.cancelInteraction(); e.c.dispose(); }
     this.entries = [];

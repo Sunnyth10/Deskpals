@@ -12,7 +12,7 @@
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:win": "npm run build && electron-builder --win",
     "typecheck": "tsc --noEmit",
-    "test": "node build.mjs --smoke && node dist-test/smoke.js && node dist-test/wellness.js"
+    "test": "node build.mjs --smoke && node dist-test/smoke.js && node dist-test/wellness.js && node dist-test/updater.js"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -122,9 +122,22 @@ const host = new OverlayPointerHost(
     setInteractive: (v) => api.setInteractive(v),
     setGrabbed: (v) => api.setGrabbed(v),
     openMenu: () => api.openMenu(),
+    openDashboard: (tab) => api.openDashboard(tab),
   },
   (c) => stage.bringToFront(c),
   wake,
+  (x, y) => stage.bubbleContainsPoint(x, y),
+  () => {
+    const bubble = stage.getActiveBubble();
+    if (bubble) {
+      if (bubble.id?.startsWith('update-')) {
+        api.openDashboard('settings');
+      } else {
+        api.openDashboard();
+      }
+      stage.dismissBubble();
+    }
+  },
 );
 
 api.onCompanions((names) => {

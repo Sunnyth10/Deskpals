@@ -20,6 +20,7 @@ export interface OverlayHostApi {
   setInteractive(interactive: boolean): void;
   setGrabbed(grabbed: boolean): void;
   openMenu(): void;
+  openDashboard?(tab?: string): void;
 }
 
 export class OverlayPointerHost {
@@ -35,6 +36,8 @@ export class OverlayPointerHost {
     private readonly api: OverlayHostApi,
     private readonly onGrab: (c: InteractiveCompanion) => void,
     private readonly onChange: () => void,
+    private readonly isOverBubble?: (x: number, y: number) => boolean,
+    private readonly onBubbleClick?: () => void,
   ) {
     window.addEventListener('mousemove', this.onHover, true);
     window.addEventListener('pointermove', this.onMove, true);
@@ -87,9 +90,11 @@ export class OverlayPointerHost {
   /** Re-evaluate hover with the last known cursor position (call once per frame). */
   public recheck(): void {
     if (this.active || !this.cursor) return;
-    const over = this.topmostNear(this.cursor.x, this.cursor.y) !== null;
+    const overCompanion = this.topmostNear(this.cursor.x, this.cursor.y) !== null;
+    const overBubble = this.isOverBubble ? this.isOverBubble(this.cursor.x, this.cursor.y) : false;
+    const over = overCompanion || overBubble;
     this.setInteractive(over);
-    this.canvas.style.cursor = over ? 'grab' : '';
+    this.canvas.style.cursor = overBubble ? 'pointer' : overCompanion ? 'grab' : '';
   }
 
   public isHolding(): boolean {
@@ -112,6 +117,11 @@ export class OverlayPointerHost {
 
   private readonly onDown = (e: PointerEvent): void => {
     if (this.active || e.button !== 0) return;
+    if (this.isOverBubble && this.isOverBubble(e.clientX, e.clientY)) {
+      if (this.onBubbleClick) this.onBubbleClick();
+      e.preventDefault();
+      return;
+    }
     const hero = this.topmostAt(e.clientX, e.clientY);
     if (!hero || !hero.pointerDown(e.clientX, e.clientY)) return;
     this.active = hero;

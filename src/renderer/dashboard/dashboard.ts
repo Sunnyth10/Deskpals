@@ -84,6 +84,69 @@ async function switchTab(tab: DashboardTab): Promise<void> {
   }
 }
 
+function renderUpdateBanner(status: import('../../shared/ipc-channels').UpdateStatusPayload): void {
+  const banner = document.getElementById('update-banner');
+  if (!banner) return;
+
+  if (!status.hasUpdate && status.status !== 'downloading' && status.status !== 'ready' && status.status !== 'error') {
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+    return;
+  }
+
+  banner.style.display = 'flex';
+
+  if (status.status === 'available') {
+    banner.innerHTML = `
+      <div class="update-pill">
+        <span>✨ ${status.latestVersion} Available</span>
+        <button class="update-btn-action" id="btn-header-update">Update</button>
+      </div>
+    `;
+    const btn = document.getElementById('btn-header-update');
+    btn?.addEventListener('click', () => {
+      void window.deskpals.startUpdate();
+    });
+    return;
+  }
+
+  if (status.status === 'downloading') {
+    const pct = status.progressPercent ?? 0;
+    banner.innerHTML = `
+      <div class="update-progress-container">
+        <span>Downloading ${pct}%</span>
+        <div class="update-progress-track">
+          <div class="update-progress-fill" style="width: ${pct}%;"></div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (status.status === 'ready') {
+    banner.innerHTML = `
+      <div class="update-pill" style="border-color: var(--accent-green); box-shadow: 0 0 10px rgba(74, 222, 128, 0.3);">
+        <span>🔄 Launching Installer...</span>
+      </div>
+    `;
+    return;
+  }
+
+  if (status.status === 'error') {
+    banner.innerHTML = `
+      <div class="update-pill" style="border-color: var(--accent-red);">
+        <span>⚠️ Update failed</span>
+        <button class="update-btn-action" id="btn-header-retry">Retry</button>
+      </div>
+    `;
+    const btn = document.getElementById('btn-header-retry');
+    btn?.addEventListener('click', () => {
+      void window.deskpals.startUpdate();
+    });
+    return;
+  }
+}
+
 async function init(): Promise<void> {
   currentSettings = await window.deskpals.getSettings();
   currentTab = currentSettings.activeTab ?? 'stats';
@@ -99,6 +162,13 @@ async function init(): Promise<void> {
 
   window.deskpals.onSettingsUpdated((newSettings) => {
     currentSettings = newSettings;
+  });
+
+  window.deskpals.onUpdateStatus((status) => {
+    renderUpdateBanner(status);
+  });
+  window.deskpals.getUpdateStatus().then((status) => {
+    renderUpdateBanner(status);
   });
 
   void switchTab(currentTab);

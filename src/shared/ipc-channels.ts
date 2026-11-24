@@ -63,9 +63,27 @@ export const IPC_CHANNELS = {
   DASHBOARD_OPEN: 'dashboard:open',
   DASHBOARD_TAB_CHANGED: 'dashboard:tab-changed',
   APP_GET_ACTIVE_APP: 'app:get-active-app',
+
+  // Updater
+  UPDATE_CHECK: 'update:check',
+  UPDATE_STATUS: 'update:status',
+  UPDATE_START: 'update:start',
+  UPDATE_PROGRESS: 'update:progress',
 } as const;
 
 export type IpcChannel = typeof IPC_CHANNELS[keyof typeof IPC_CHANNELS];
+
+export interface UpdateStatusPayload {
+  hasUpdate: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  releaseNotes?: string;
+  assetName?: string;
+  assetSize?: number;
+  status: 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
+  progressPercent?: number;
+  errorMessage?: string;
+}
 
 export interface FocusStatus {
   active: boolean;

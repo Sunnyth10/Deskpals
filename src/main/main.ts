@@ -32,6 +32,7 @@ import {
   type DashboardTab,
   type Settings,
 } from '../core/settings';
+import { AppUpdater } from './updater';
 import {
   isCountdownActive,
   isReminderDue,
@@ -277,6 +278,7 @@ let companionGrabbed = false;
 let recreatingOverlay = false;
 const suspendReasons = new Set<string>();
 let fullscreenWatcher: ReturnType<typeof spawn> | null = null;
+let appUpdater: AppUpdater | null = null;
 
 function currentForegroundAppInfo(): { bundleId: string | null; name: string | null } {
   if (process.platform === 'darwin') {
@@ -458,6 +460,9 @@ function openDashboard(tab?: DashboardTab): void {
 
   dashboardWin.once('ready-to-show', () => {
     dashboardWin?.show();
+    if (appUpdater) {
+      dashboardWin?.webContents.send(IPC_CHANNELS.UPDATE_STATUS, appUpdater.getStatus());
+    }
   });
 
   dashboardWin.on('closed', () => {
@@ -554,8 +559,19 @@ function handleResetPomodoro(): PomodoroStatus {
 function buildMenu(): Menu {
   const displays = screen.getAllDisplays();
   const target = targetDisplay();
+  const hasUpdate = appUpdater?.getStatus().hasUpdate;
+  const updateVersion = appUpdater?.getStatus().latestVersion;
 
   const template: MenuItemConstructorOptions[] = [
+    ...(hasUpdate
+      ? [
+          {
+            label: `🚀 Update to ${updateVersion} available!`,
+            click: () => openDashboard('settings'),
+          },
+          { type: 'separator' as const },
+        ]
+      : []),
     {
       label: '🐾 Open DeskPals',
       click: () => openDashboard(settings.activeTab),
@@ -1095,6 +1111,40 @@ ipcMain.handle(IPC_CHANNELS.APP_GET_ACTIVE_APP, () => {
   return currentForegroundAppInfo().name;
 });
 
+ipcMain.handle(IPC_CHANNELS.UPDATE_STATUS, () => {
+  return (
+    appUpdater?.getStatus() ?? {
+      hasUpdate: false,
+      currentVersion: app.getVersion(),
+      latestVersion: app.getVersion(),
+      status: 'idle',
+      progressPercent: 0,
+    }
+  );
+});
+
+ipcMain.handle(IPC_CHANNELS.UPDATE_CHECK, async () => {
+  if (!appUpdater) {
+    return {
+      hasUpdate: false,
+      currentVersion: app.getVersion(),
+      latestVersion: app.getVersion(),
+      status: 'idle',
+      progressPercent: 0,
+    };
+  }
+  return await appUpdater.checkForUpdates();
+});
+
+ipcMain.handle(IPC_CHANNELS.UPDATE_START, async () => {
+  if (!appUpdater) return;
+  await appUpdater.startDownloadAndInstall();
+});
+
+ipcMain.on(IPC_CHANNELS.DASHBOARD_OPEN, (_e, tab?: DashboardTab) => {
+  openDashboard(tab);
+});
+
 ipcMain.on(IPC_CHANNELS.DASHBOARD_TAB_CHANGED, (_e, tab: DashboardTab) => {
   settings.activeTab = tab;
   saveSettings();
@@ -1251,6 +1301,26 @@ app.whenReady().then(() => {
   if (DEBUG) {
     setInterval(() => sendOverlay('overlay:telemetry-request'), 5000);
   }
+
+  // Automatic In-App Updates
+  appUpdater = new AppUpdater(
+    (status) => {
+      if (dashboardWin && !dashboardWin.isDestroyed()) {
+        dashboardWin.webContents.send(IPC_CHANNELS.UPDATE_STATUS, status);
+      }
+      refreshMenu();
+    },
+    (latestVersion) => {
+      showCompanionBubble({
+        id: 'update-available',
+        text: `🐾 A new update (${latestVersion}) is available!`,
+        subtext: 'Click here or open Dashboard to update',
+        durationSeconds: 25,
+      });
+      triggerCompanionEnlarge(1.4, 3.0);
+    },
+  );
+  appUpdater.startPeriodicChecks(4);
 });
 
 // Tray application behavior: Closing windows does NOT quit the background companion
@@ -1260,4 +1330,5 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   fullscreenWatcher?.kill();
+  appUpdater?.dispose();
 });

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC_CHANNELS } from '../shared/ipc-channels';
+import { IPC_CHANNELS, type UpdateStatusPayload } from '../shared/ipc-channels';
 import type { Settings, DashboardTab } from '../core/settings';
 import type { SevenDaysSummary, HeatmapGrid } from '../core/stats';
 import type { ReminderItem } from '../core/reminders';
@@ -35,6 +35,10 @@ export interface DashboardApi {
   onTodosUpdated(cb: () => void): () => void;
   setTab(tab: DashboardTab): void;
   getActiveApp(): Promise<string | null>;
+  getUpdateStatus(): Promise<UpdateStatusPayload>;
+  checkForUpdates(): Promise<UpdateStatusPayload>;
+  startUpdate(): Promise<void>;
+  onUpdateStatus(cb: (status: UpdateStatusPayload) => void): () => void;
 }
 
 const api: DashboardApi = {
@@ -92,6 +96,14 @@ const api: DashboardApi = {
   },
   setTab: (tab) => ipcRenderer.send(IPC_CHANNELS.DASHBOARD_TAB_CHANGED, tab),
   getActiveApp: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_ACTIVE_APP),
+  getUpdateStatus: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_STATUS),
+  checkForUpdates: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CHECK),
+  startUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_START),
+  onUpdateStatus: (cb) => {
+    const handler = (_event: unknown, status: UpdateStatusPayload) => cb(status);
+    ipcRenderer.on(IPC_CHANNELS.UPDATE_STATUS, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.UPDATE_STATUS, handler);
+  },
 };
 
 contextBridge.exposeInMainWorld('deskpals', api);

@@ -17,6 +17,21 @@ export class SpeechBubbleManager {
   private queue: SpeechBubbleMessage[] = [];
   private active: ActiveBubble | null = null;
   private countdown: CountdownPayload | null = null;
+  private lastBox: { x: number; y: number; width: number; height: number } | null = null;
+
+  public containsPoint(x: number, y: number): boolean {
+    if (!this.active || this.active.alpha <= 0.1 || !this.lastBox) return false;
+    return (
+      x >= this.lastBox.x &&
+      x <= this.lastBox.x + this.lastBox.width &&
+      y >= this.lastBox.y &&
+      y <= this.lastBox.y + this.lastBox.height
+    );
+  }
+
+  public getActiveBubble(): ActiveBubble | null {
+    return this.active;
+  }
 
   public showMessage(msg: SpeechBubbleMessage, defaultDurationSec = 6): void {
     const durationSec = msg.durationSeconds ?? defaultDurationSec;
@@ -35,6 +50,7 @@ export class SpeechBubbleManager {
 
   public dismiss(): void {
     this.active = null;
+    this.lastBox = null;
     if (this.queue.length > 0) {
       this.activate(this.queue.shift()!);
     }
@@ -135,6 +151,8 @@ export class SpeechBubbleManager {
       }
     }
 
+    this.lastBox = { x: boxX, y: boxY, width: boxW, height: boxH };
+
     // Draw speech bubble body with shadow
     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
     ctx.shadowBlur = 10;
@@ -176,6 +194,7 @@ export class SpeechBubbleManager {
     // Kind icon prefix
     let icon = '💬';
     if (bubble.kind === 'alert') icon = '⏰';
+    if (bubble.id?.startsWith('update-')) icon = '🚀';
 
     // Draw main text
     ctx.fillStyle = '#ffffff';
@@ -263,24 +282,5 @@ export class SpeechBubbleManager {
     ctx.fillText(label, pillX + pillW / 2, pillY + pillH / 2);
 
     ctx.restore();
-  }
-
-  public containsPoint(
-    px: number,
-    py: number,
-    anchorX: number,
-    anchorY: number,
-    bounds?: ZoneBounds
-  ): boolean {
-    if (!this.active || this.active.alpha < 0.2) return false;
-    const boxW = 160;
-    const boxH = 46;
-    let boxX = anchorX - boxW / 2;
-    let boxY = anchorY - 14 - boxH;
-    if (bounds) {
-      boxX = Math.max(bounds.x + 8, Math.min(bounds.x + bounds.width - boxW - 8, boxX));
-      if (boxY < bounds.y + 4) boxY = Math.max(bounds.y + 4, boxY);
-    }
-    return px >= boxX && px <= boxX + boxW && py >= boxY && py <= boxY + boxH + 10;
   }
 }

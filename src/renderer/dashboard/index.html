@@ -83,6 +83,76 @@
       line-height: 1;
     }
 
+    /* Update Notification Banner */
+    .update-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+    }
+
+    .update-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(56, 189, 248, 0.15));
+      border: 1px solid rgba(168, 85, 247, 0.5);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #f3f4f6;
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.25);
+    }
+
+    .update-btn-action {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .update-btn-action:hover {
+      background: var(--primary-hover);
+      transform: scale(1.04);
+    }
+
+    .update-progress-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent-blue);
+    }
+
+    .update-progress-track {
+      width: 70px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .update-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-blue), var(--primary));
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
     .segmented-tabs {
       display: flex;
       background: var(--bg);
@@ -439,6 +509,7 @@
         <span class="brand-icon">🐾</span>
         <span>DeskPals Dashboard</span>
       </div>
+      <div id="update-banner" class="update-banner" style="display: none;"></div>
     </div>
     <div class="segmented-tabs" id="tab-bar">
       <button class="tab-btn active" data-tab="stats">

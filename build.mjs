@@ -13,6 +13,10 @@ if (process.argv.includes('--smoke')) {
       entryPoints: ['test/wellness.test.ts'], outfile: 'dist-test/wellness.js',
       bundle: true, platform: 'node', format: 'cjs', target: 'node20', logLevel: 'info',
     }),
+    build({
+      entryPoints: ['test/updater.test.ts'], outfile: 'dist-test/updater.js',
+      bundle: true, platform: 'node', format: 'cjs', target: 'node20', logLevel: 'info', external: ['electron'],
+    }),
   ]);
 } else {
   const common = { bundle: true, logLevel: 'info', sourcemap: false };

@@ -526,9 +526,92 @@ export function renderSettingsTab(
 
   container.appendChild(focusCard);
 
+  // 6. Software Updates Card
+  const { card: updateCard, body: updateBody } = createCard('Updates & Releases', 'DeskPals automatically checks for new releases in the background.');
+  const updateRow = document.createElement('div');
+  updateRow.className = 'setting-row';
+  updateRow.innerHTML = `
+    <div class="setting-info">
+      <div class="setting-label" id="settings-version-label">Current Version: v1.1.0</div>
+      <div class="setting-desc" id="settings-update-status">Click below to check for the latest features and bug fixes.</div>
+    </div>
+  `;
+
+  const updateActions = document.createElement('div');
+  updateActions.style.display = 'flex';
+  updateActions.style.gap = '8px';
+
+  const checkBtn = document.createElement('button');
+  checkBtn.type = 'button';
+  checkBtn.className = 'btn-secondary';
+  checkBtn.innerText = 'Check for Updates';
+
+  const installBtn = document.createElement('button');
+  installBtn.type = 'button';
+  installBtn.className = 'btn-primary';
+  installBtn.innerText = 'Update Now';
+  installBtn.style.display = 'none';
+
+  updateActions.appendChild(checkBtn);
+  updateActions.appendChild(installBtn);
+  updateRow.appendChild(updateActions);
+  updateBody.appendChild(updateRow);
+  container.appendChild(updateCard);
+
+  const applyStatusToSettings = (s: import('../../shared/ipc-channels').UpdateStatusPayload) => {
+    const statusDesc = document.getElementById('settings-update-status');
+    const versionLabel = document.getElementById('settings-version-label');
+    if (versionLabel) versionLabel.innerText = `Current Version: v${s.currentVersion}`;
+    if (!statusDesc) return;
+
+    if (s.status === 'checking') {
+      statusDesc.innerText = 'Checking GitHub releases for updates...';
+      checkBtn.disabled = true;
+      installBtn.style.display = 'none';
+    } else if (s.status === 'available') {
+      statusDesc.innerHTML = `<span style="color:var(--accent-green);font-weight:600">✨ New version ${s.latestVersion} is available!</span>`;
+      checkBtn.disabled = false;
+      installBtn.style.display = 'inline-block';
+      installBtn.innerText = `Update to ${s.latestVersion}`;
+    } else if (s.status === 'downloading') {
+      statusDesc.innerHTML = `<span style="color:var(--accent-blue)">Downloading update... ${s.progressPercent ?? 0}%</span>`;
+      checkBtn.disabled = true;
+      installBtn.style.display = 'none';
+    } else if (s.status === 'ready') {
+      statusDesc.innerHTML = `<span style="color:var(--accent-green)">🔄 Download complete. Launching installer...</span>`;
+      checkBtn.disabled = true;
+      installBtn.style.display = 'none';
+    } else if (s.status === 'error') {
+      statusDesc.innerHTML = `<span style="color:var(--accent-red)">Failed to check/download update. ${s.errorMessage ?? ''}</span>`;
+      checkBtn.disabled = false;
+      installBtn.style.display = 'none';
+    } else {
+      statusDesc.innerText = `✓ DeskPals is up to date (v${s.currentVersion}).`;
+      checkBtn.disabled = false;
+      installBtn.style.display = 'none';
+    }
+  };
+
+  checkBtn.addEventListener('click', async () => {
+    checkBtn.disabled = true;
+    const res = await window.deskpals.checkForUpdates();
+    applyStatusToSettings(res);
+  });
+
+  installBtn.addEventListener('click', async () => {
+    installBtn.disabled = true;
+    await window.deskpals.startUpdate();
+  });
+
+  window.deskpals.getUpdateStatus().then(applyStatusToSettings);
+  const unbindUpdate = window.deskpals.onUpdateStatus(applyStatusToSettings);
+
   // Query initial focus status
   window.deskpals.getFocusStatus().then(updateFocusUI);
   const unbindFocus = window.deskpals.onFocusStatus(updateFocusUI);
 
-  return unbindFocus;
+  return () => {
+    unbindFocus();
+    unbindUpdate();
+  };
 }

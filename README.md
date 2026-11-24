@@ -13,7 +13,7 @@
 <p align="center"><strong>Tiny animated companions that live on top of everything you do.</strong> Watch YouTube. Chat on WhatsApp. Write code. A cat, a fox, a robot, a web-slinging hero or a ghost hangs out right there with you.</p>
 
 <p align="center">
-  <a href="https://github.com/Sunnyth10/Deskpals/releases/tag/v1.1.0"><img alt="Version: 1.1.0" src="docs/images/badges/version.svg"></a>
+  <a href="https://github.com/Sunnyth10/Deskpals/releases/tag/v1.2.0"><img alt="Version: 1.2.0" src="docs/images/badges/version.svg"></a>
   <a href="https://desktop-pals-two.vercel.app"><img alt="Live Website" src="docs/images/badges/website.svg"></a>
   <a href="#️-download-deskpals"><img alt="Platform: macOS and Windows" src="docs/images/badges/platform.svg"></a>
   <a href="#-meet-the-companions"><img alt="5 companions" src="docs/images/badges/companions.svg"></a>
@@ -79,9 +79,9 @@ You can click them, drag them, pet them, ignore them, or let them wander. They r
 
 | Platform | Architecture | Package | File Size | Direct Download |
 | :--- | :--- | :--- | :--- | :--- |
-| 🍏 **macOS** | **Apple Silicon** (M1/M2/M3/M4) | `.dmg` | ~88 MB | [**Download for Apple Silicon (.dmg)**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-arm64.dmg) |
-| 🍏 **macOS** | **Intel Mac** (x64) | `.dmg` | ~91 MB | [**Download for Intel Mac (.dmg)**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-x64.dmg) |
-| 🪟 **Windows** | **Windows 10 / 11** (64-bit) | `.exe` | ~84 MB | [**Download for Windows (.exe)**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-win-x64.exe) |
+| 🍏 **macOS** | **Apple Silicon** (M1/M2/M3/M4) | `.dmg` | ~88 MB | [**Download for Apple Silicon (.dmg)**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.2.0/DeskPals-mac-arm64.dmg) |
+| 🍏 **macOS** | **Intel Mac** (x64) | `.dmg` | ~91 MB | [**Download for Intel Mac (.dmg)**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.2.0/DeskPals-mac-x64.dmg) |
+| 🪟 **Windows** | **Windows 10 / 11** (64-bit) | `.exe` | ~84 MB | [**Download for Windows (.exe)**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.2.0/DeskPals-win-x64.exe) |
 
 </div>
 
@@ -261,7 +261,7 @@ There are **5 companions** in the current release.
 <div align="center">
 
 <p align="center">
-  <a href="https://github.com/Sunnyth10/Deskpals/releases"><img alt="Release: v1.1.0" src="docs/images/badges/release.svg"></a>
+  <a href="https://github.com/Sunnyth10/Deskpals/releases"><img alt="Release: v1.2.0" src="docs/images/badges/release.svg"></a>
   &nbsp;
   <a href="https://github.com/Sunnyth10/Deskpals/releases"><img alt="Downloads" src="docs/images/badges/downloads.svg"></a>
   &nbsp;
@@ -270,9 +270,9 @@ There are **5 companions** in the current release.
 
 | Platform | Download Link | Installer Size |
 | :--- | :--- | :--- |
-| 🍏 **macOS Apple Silicon** | [**DeskPals-mac-arm64.dmg**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-arm64.dmg) | ~88 MB |
-| 🍏 **macOS Intel** | [**DeskPals-mac-x64.dmg**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-mac-x64.dmg) | ~91 MB |
-| 🪟 **Windows x64** | [**DeskPals-win-x64.exe**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.1.0/DeskPals-win-x64.exe) | ~84 MB |
+| 🍏 **macOS Apple Silicon** | [**DeskPals-mac-arm64.dmg**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.2.0/DeskPals-mac-arm64.dmg) | ~88 MB |
+| 🍏 **macOS Intel** | [**DeskPals-mac-x64.dmg**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.2.0/DeskPals-mac-x64.dmg) | ~91 MB |
+| 🪟 **Windows x64** | [**DeskPals-win-x64.exe**](https://github.com/Sunnyth10/Deskpals/releases/download/v1.2.0/DeskPals-win-x64.exe) | ~84 MB |
 
 <br>
 
